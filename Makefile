@@ -1,5 +1,5 @@
 APP_NAME=
-APP_DIR=$(shell if [ -d apps/$(APP_NAME) ]; then echo "apps/$(APP_NAME)"; else echo; fi)
+APP_DIR=$(shell if [ -d apps/$(APP_NAME) ]; then echo "apps/$(APP_NAME)"; else echo .; fi)
 OBJ=$(shell ls $(APP_DIR)/src/*.erl | sed -e 's/\.erl$$/.beam/' | sed -e 's;^$(APP_DIR)/src;$(APP_DIR)/ebin;g') $(shell ls $(APP_DIR)/src/*.app.src | sed -e 's/\.src$$//g' | sed -e 's;^$(APP_DIR)/src;$(APP_DIR)/ebin;g')
 DEPS=$(shell cat rebar.config  | sed -e 's;{\(\w\+\), [^,]\+, {\w\+, [^,]\+, \({[^,]\+, [^}]\+}\|".*\?"\)}},\?;\n\0\n;' | sed -e '/{\(\w\+\), [^,]\+, {\w\+, [^,]\+, \({[^,]\+, [^}]\+}\|".*\?"\)}},\?/!d' | sed -e 's;{\(\w\+\), [^,]\+, {\w\+, [^,]\+, \({[^,]\+, [^}]\+}\|".*\?"\)}},\?;deps/\1/rebar.config;')
 ERL=erl

@@ -1,0 +1,14 @@
+{application, libchunter,
+ [
+  {description, ""},
+  {vsn, "0.1.0"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib,
+		  redgrid,
+		  gproc
+                 ]},
+  {mod, { libchunter_app, []}},
+  {env, []}
+ ]}.
