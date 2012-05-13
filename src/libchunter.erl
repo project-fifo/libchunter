@@ -69,11 +69,22 @@ chunter_call(Pid, {Auth, _}, Call) ->
     chunter_call(Pid, Auth, Call);
 
 chunter_call(Pid, Auth, Call) ->
-    gen_server:call(Pid, {call, Auth, Call}).
+    try 
+	gen_server:call(Pid, {call, Auth, Call})
+    catch
+	_T:_E ->
+	    {error, cant_call}
+    end.
+
 
 
 chunter_cast(Pid, {Auth, _}, Call) ->
     chunter_cast(Pid, Auth, Call);
 
 chunter_cast(Pid, Auth, Call) ->
-    gen_server:cast(Pid, {cast, Auth, Call}).
+    try
+	gen_server:cast(Pid, {cast, Auth, Call})
+    catch
+	_T:_E ->
+	    {error, cant_call}
+    end.
