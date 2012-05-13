@@ -18,6 +18,7 @@
 	 reboot_machine/3,
 	 list_packages/2,
 	 list_datasets/2,
+	 get_dataset/3,
 	 list_keys/2]).
 
 %%%===================================================================
@@ -56,6 +57,9 @@ list_packages(Pid, Auth) ->
 
 list_datasets(Pid, Auth) ->
     chunter_call(Pid, Auth, {datasets, list}).
+
+get_dataset(Pid, Auth, UUID) ->
+    chunter_call(Pid, Auth, {datasets, get, UUID}).
 
 list_keys(Pid, Auth) ->
     chunter_call(Pid, Auth, {keys, list}).
