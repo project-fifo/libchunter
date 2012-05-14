@@ -45,7 +45,7 @@ start_machine(Pid, Auth, UUID) ->
     chunter_cast(Pid, Auth, {machines, start, UUID}).
 
 create_machine(Pid, Auth, Name, PackageUUID, DatasetUUID, Metadata, Tags) ->
-    chunter_cast(Pid, Auth, {machines, create, Name, PackageUUID, DatasetUUID, Metadata, Tags}).
+    chunter_call(Pid, Auth, {machines, create, Name, PackageUUID, DatasetUUID, Metadata, Tags}).
 
 start_machine(Pid, Auth, UUID, Image) ->
     chunter_cast(Pid, Auth, {machines, start, UUID, Image}).
