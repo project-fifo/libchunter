@@ -12,6 +12,7 @@
 -export([list_machines/2,
 	 get_machine/3,
 	 get_machine_info/3,
+	 create_machine/7,
 	 start_machine/3,
 	 start_machine/4,
 	 stop_machine/3,
@@ -42,6 +43,9 @@ get_machine_info(Pid, Auth, UUID) ->
 
 start_machine(Pid, Auth, UUID) ->
     chunter_cast(Pid, Auth, {machines, start, UUID}).
+
+create_machine(Pid, Auth, Name, PackageUUID, DatasetUUID, Metadata, Tags) ->
+    chunter_cast(Pid, Auth, {machines, create, Name, PackageUUID, DatasetUUID, Metadata, Tags}).
 
 start_machine(Pid, Auth, UUID, Image) ->
     chunter_cast(Pid, Auth, {machines, start, UUID, Image}).
