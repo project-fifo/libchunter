@@ -44,8 +44,10 @@ get_machine_info(Pid, Auth, UUID) ->
 start_machine(Pid, Auth, UUID) ->
     chunter_cast(Pid, Auth, {machines, start, UUID}).
 
+create_machine(Pid, {Auth, _}, Name, PackageUUID, DatasetUUID, Metadata, Tags) ->
+    create_machine(Pid, Auth, Name, PackageUUID, DatasetUUID, Metadata, Tags);
 create_machine(Pid, Auth, Name, PackageUUID, DatasetUUID, Metadata, Tags) ->
-    chunter_call(Pid, Auth, {machines, create, Name, PackageUUID, DatasetUUID, Metadata, Tags}).
+    gen_server:call(Pid, {call, Auth, {machines, create, Name, PackageUUID, DatasetUUID, Metadata, Tags}},60000).
 
 start_machine(Pid, Auth, UUID, Image) ->
     chunter_cast(Pid, Auth, {machines, start, UUID, Image}).
@@ -80,11 +82,10 @@ chunter_call(Pid, Auth, Call) ->
     try 
 	gen_server:call(Pid, {call, Auth, Call})
     catch
-	_T:_E ->
+	T:E ->
+	    io:format("call: ~p~p~n", [T, E]),
 	    {error, cant_call}
     end.
-
-
 
 chunter_cast(Pid, {Auth, _}, Call) ->
     chunter_cast(Pid, Auth, Call);
@@ -93,6 +94,7 @@ chunter_cast(Pid, Auth, Call) ->
     try
 	gen_server:cast(Pid, {cast, Auth, Call})
     catch
-	_T:_E ->
+	T:E ->
+	    io:format("cast: ~p~p~n", [T, E]),
 	    {error, cant_call}
     end.
