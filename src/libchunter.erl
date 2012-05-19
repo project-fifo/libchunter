@@ -44,6 +44,10 @@ get_machine_info(Pid, Auth, UUID) ->
 start_machine(Pid, Auth, UUID) ->
     chunter_cast(Pid, Auth, {machines, start, UUID}).
 
+delete_machine(Pid, Auth, UUID) ->
+    chunter_cast(Pid, Auth, {machines, delete, UUID}).
+
+
 create_machine(Pid, {Auth, _}, Name, PackageUUID, DatasetUUID, Metadata, Tags) ->
     create_machine(Pid, Auth, Name, PackageUUID, DatasetUUID, Metadata, Tags);
 create_machine(Pid, Auth, Name, PackageUUID, DatasetUUID, Metadata, Tags) ->
