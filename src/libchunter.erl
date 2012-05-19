@@ -10,6 +10,7 @@
 
 %% API
 -export([list_machines/2,
+         delete_machine/3,
 	 get_machine/3,
 	 get_machine_info/3,
 	 create_machine/7,
