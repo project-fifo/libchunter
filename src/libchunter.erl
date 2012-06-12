@@ -8,8 +8,6 @@
 %%%-------------------------------------------------------------------
 -module(libchunter).
 
--include_lib("alog_pt.hrl").
-
 %% API
 -export([list_machines/2,
          delete_machine/3,
@@ -87,11 +85,12 @@ chunter_call(Pid, {Auth, _}, Call) ->
 
 chunter_call(Pid, Auth, Call) ->
     try 
-	?DBG({libchunter, call, Auth, Call}, [], [libchunter]),
 	gen_server:call(Pid, {call, Auth, Call})
     catch
 	T:E ->
-	    ?ERROR({libchunter, call, error, T, E}, [], [libchunter]),
+	    lager:error([{fifi_component, libchunter}, {user, Auth}],
+			"libchunter:call - Error ~p:~p, Call: ~p.",
+			[T, E, Call]),
 	    {error, cant_call}
     end.
 
@@ -100,10 +99,11 @@ chunter_cast(Pid, {Auth, _}, Call) ->
 
 chunter_cast(Pid, Auth, Call) ->
     try
-	?DBG({libchunter, cast, Auth, Call}, [], [libchunter]),
 	gen_server:cast(Pid, {cast, Auth, Call})
     catch
 	T:E ->
-	    ?ERROR({libchunter, cast, error, T, E}, [], [libchunter]),
+	    lager:error([{fifi_component, libchunter}, {user, Auth}],
+			"libchunter:cast - Error ~p:~p, Cast: ~p.",
+			[T, E, Call]),
 	    {error, cant_call}
     end.
