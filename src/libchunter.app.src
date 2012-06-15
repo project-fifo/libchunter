@@ -7,7 +7,6 @@
                   kernel,
                   stdlib,
                   lager,
-		  redgrid,
 		  gproc
                  ]},
   {mod, { libchunter_app, []}},
