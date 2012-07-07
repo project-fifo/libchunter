@@ -7,7 +7,7 @@
                   kernel,
                   stdlib,
                   lager,
-		  gproc
+		  backyard
                  ]},
   {mod, { libchunter_app, []}},
   {env, []}
