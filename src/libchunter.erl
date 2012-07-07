@@ -35,6 +35,17 @@
 %% @type user() = uuid().
 -type user() :: uuid().
 
+%% @type permission() = atom() | binary().
+-type permission() ::
+	atom() |
+	binary().
+
+%% @type permissions() = [permission()].
+-type permissions() ::
+	[permission()].
+
+
+
 %% @type cached_auth() = {user(), permissions()}.
 -type cached_auth() :: 
 	{user(), permissions()}.
