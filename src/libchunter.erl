@@ -21,6 +21,7 @@
 	 list_packages/2,
 	 list_datasets/2,
 	 get_dataset/3,
+	 get_memory_info/2,
 	 list_keys/2]).
 
 %% @type uuid() = binary().
@@ -164,6 +165,9 @@ get_dataset(Pid, Auth, UUID) ->
 
 list_keys(Pid, Auth) ->
     chunter_call(Pid, Auth, {keys, list}).
+    
+get_memory_info(Pid, Auth) ->
+    chunter_call(Pid, Auth, {info, memory}).
     
 
 %%%===================================================================
