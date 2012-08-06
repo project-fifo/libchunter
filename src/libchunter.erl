@@ -134,7 +134,7 @@ delete_machine(Pid, Auth, UUID) ->
 create_machine(Pid, {Auth, _}, Name, PackageUUID, DatasetUUID, Metadata, Tags) ->
     create_machine(Pid, Auth, Name, PackageUUID, DatasetUUID, Metadata, Tags);
 create_machine(Pid, Auth, Name, PackageUUID, DatasetUUID, Metadata, Tags) ->
-    gen_server:call(Pid, {call, Auth, {machines, create, Name, PackageUUID, DatasetUUID, Metadata, Tags}},60000).
+    chunter_cast(Pid, Auth, {machines, create, Name, PackageUUID, DatasetUUID, Metadata, Tags}).
 
 %%--------------------------------------------------------------------
 %% @spec (pid(), auth(), 
