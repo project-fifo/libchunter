@@ -9,92 +9,31 @@
 -module(libchunter).
 
 %% API
--export([list_machines/2,
-         delete_machine/3,
-	 get_machine/3,
-	 get_machine_info/3,
+-export([
+	 delete_machine/3,
 	 create_machine/7,
 	 start_machine/3,
 	 start_machine/4,
 	 stop_machine/3,
 	 reboot_machine/3,
-	 list_packages/2,
-	 list_datasets/2,
-	 get_dataset/3,
-	 get_memory_info/2,
-	 list_keys/2]).
+	 start/0
+	]).
 
 %% @type uuid() = binary().
--type uuid() ::
-	binary().
-
-%% @type machine() = uuid().
--type machine() ::
-	uuid().
+%-type uuid() ::
+%	binary().
 
 
 %% @type user() = uuid().
--type user() :: uuid().
-
-%% @type permission() = atom() | binary().
--type permission() ::
-	atom() |
-	binary().
-
-%% @type permissions() = [permission()].
--type permissions() ::
-	[permission()].
-
-
-
-%% @type cached_auth() = {user(), permissions()}.
--type cached_auth() :: 
-	{user(), permissions()}.
-
-%% @type auth() = system | user() | cached_auth().
--type auth() ::
-	system | 
-	user() |
-	cached_auth().
+%-type user() :: uuid().
 
 %%%===================================================================
 %%% API
 %%%===================================================================
 
-%%--------------------------------------------------------------------
-%% @spec (pid(), auth()) -> [machine()]
-%%
-%% @doc Lists all machines on a server visible to the user.
-%%
-%% @end
-%%--------------------------------------------------------------------
-
-list_machines(Pid, Auth) ->
-    chunter_call(Pid, Auth, {machines, list}).
-
-%%--------------------------------------------------------------------
-%% @spec (pid(), auth(), machine()) -> [term()]
-%%
-%% @doc Lists all machines on a server visible to the user.
-%%
-%% This command is pretty much equal to vmadm get machine.
-%% @end
-%%--------------------------------------------------------------------
-
-get_machine(Pid, Auth, UUID) ->
-    chunter_call(Pid, Auth, {machines, get, UUID}).
-
-%%--------------------------------------------------------------------
-%% @spec (pid(), auth(), machine()) -> [term()]
-%%
-%% @doc Gets the runtime info of a KVM machine.
-%%
-%% This command is pretty much equal to vmadm info machine.
-%% @end
-%%--------------------------------------------------------------------
-
-get_machine_info(Pid, Auth, UUID) ->
-    chunter_call(Pid, Auth, {machines, info, UUID}).
+start() ->
+    application:start(lager),
+    application:start(libchunter).
 
 %%--------------------------------------------------------------------
 %% @spec (pid(), auth(), machine()) -> ok
@@ -106,8 +45,8 @@ get_machine_info(Pid, Auth, UUID) ->
 %%--------------------------------------------------------------------
 
 
-start_machine(Pid, Auth, UUID) ->
-    chunter_cast(Pid, Auth, {machines, start, UUID}).
+start_machine(Server, Port, UUID) ->
+    chunter_cast(Server, Port, {machines, start, UUID}).
 
 %%--------------------------------------------------------------------
 %% @spec (pid(), auth(), machine()) -> ok
@@ -118,8 +57,8 @@ start_machine(Pid, Auth, UUID) ->
 %% @end
 %%--------------------------------------------------------------------
 
-delete_machine(Pid, Auth, UUID) ->
-    chunter_cast(Pid, Auth, {machines, delete, UUID}).
+delete_machine(Server, Port, UUID) ->
+    chunter_cast(Server, Port, {machines, delete, UUID}).
 
 %%--------------------------------------------------------------------
 %% @spec (pid(), auth(), 
@@ -131,10 +70,8 @@ delete_machine(Pid, Auth, UUID) ->
 %% @end
 %%--------------------------------------------------------------------
 
-create_machine(Pid, {Auth, _}, Name, PackageUUID, DatasetUUID, Metadata, Tags) ->
-    create_machine(Pid, Auth, Name, PackageUUID, DatasetUUID, Metadata, Tags);
-create_machine(Pid, Auth, Name, PackageUUID, DatasetUUID, Metadata, Tags) ->
-    chunter_cast(Pid, Auth, {machines, create, Name, PackageUUID, DatasetUUID, Metadata, Tags}).
+create_machine(Server, Port, Name, PackageUUID, DatasetUUID, Metadata, Tags) ->
+    chunter_cast(Server, Port, {machines, create, Name, PackageUUID, DatasetUUID, Metadata, Tags}).
 
 %%--------------------------------------------------------------------
 %% @spec (pid(), auth(), 
@@ -145,59 +82,33 @@ create_machine(Pid, Auth, Name, PackageUUID, DatasetUUID, Metadata, Tags) ->
 %% @end
 %%--------------------------------------------------------------------
 
-start_machine(Pid, Auth, UUID, Image) ->
-    chunter_cast(Pid, Auth, {machines, start, UUID, Image}).
+start_machine(Server, Port, UUID, Image) ->
+    chunter_cast(Server, Port, {machines, start, UUID, Image}).
 
-stop_machine(Pid, Auth, UUID) ->
-    chunter_cast(Pid, Auth, {machines, stop, UUID}).
+stop_machine(Server, Port, UUID) ->
+    chunter_cast(Server, Port, {machines, stop, UUID}).
 
-reboot_machine(Pid, Auth, UUID) ->
-    chunter_cast(Pid, Auth, {machines, stop, UUID}).
-
-list_packages(Pid, Auth) ->
-    chunter_call(Pid, Auth, {packages, list}).
-
-list_datasets(Pid, Auth) ->
-    chunter_call(Pid, Auth, {datasets, list}).
-
-get_dataset(Pid, Auth, UUID) ->
-    chunter_call(Pid, Auth, {datasets, get, UUID}).
-
-list_keys(Pid, Auth) ->
-    chunter_call(Pid, Auth, {keys, list}).
-    
-get_memory_info(Pid, Auth) ->
-    chunter_call(Pid, Auth, {info, memory}).
+reboot_machine(Server, Port, UUID) ->
+    chunter_cast(Server, Port, {machines, reboot, UUID}).
     
 
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
 
-chunter_call(Pid, {Auth, _}, Call) ->    
-    chunter_call(Pid, Auth, Call);
+%chunter_call(Server, Port,{Auth, _}, Call) ->    
+%    chunter_call(Server, Port, Call);
 
-chunter_call(Pid, Auth, Call) ->
-    try 
-	gen_server:call(Pid, {call, Auth, Call})
-    catch
-	T:E ->
-	    lager:error([{fifi_component, libchunter}, {user, Auth}],
-			"libchunter:call - Error ~p:~p, Call: ~p.",
-			[T, E, Call]),
-	    {error, cant_call}
-    end.
+%chunter_call(Server, Port, Call) ->
+%    try 
+%	gen_server:call(Server, Port,{call, Auth, Call})
+%    catch
+%	T:E ->
+%	    lager:error([{fifi_component, libchunter}, {user, Auth}],
+%			"libchunter:call - Error ~p:~p, Call: ~p.",
+%			[T, E, Call]),
+%	    {error, cant_call}
+%    end.
 
-chunter_cast(Pid, {Auth, _}, Call) ->
-    chunter_cast(Pid, Auth, Call);
-
-chunter_cast(Pid, Auth, Call) ->
-    try
-	gen_server:cast(Pid, {cast, Auth, Call})
-    catch
-	T:E ->
-	    lager:error([{fifi_component, libchunter}, {user, Auth}],
-			"libchunter:cast - Error ~p:~p, Cast: ~p.",
-			[T, E, Call]),
-	    {error, cant_call}
-    end.
+chunter_cast(Server, Port, Call) ->
+    libchunter_server:cast(Server, Port,Call).
