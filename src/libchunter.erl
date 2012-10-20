@@ -11,7 +11,7 @@
 %% API
 -export([
 	 delete_machine/3,
-	 create_machine/4,
+	 create_machine/6,
 	 start_machine/3,
 	 start_machine/4,
 	 stop_machine/3,
@@ -70,8 +70,8 @@ delete_machine(Server, Port, UUID) ->
 %% @end
 %%--------------------------------------------------------------------
 
-create_machine(Server, Port, UUID, Spec) ->
-    chunter_cast(Server, Port, {machines, create, UUID, Spec}).
+create_machine(Server, Port, UUID, PSpec, DSpec, OSpec) ->
+    chunter_cast(Server, Port, {machines, create, UUID, PSpec, DSpec, OSpec}).
 
 %%--------------------------------------------------------------------
 %% @spec (pid(), auth(), 
