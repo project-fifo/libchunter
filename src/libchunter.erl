@@ -44,7 +44,6 @@ start() ->
 %% @end
 %%--------------------------------------------------------------------
 
-
 start_machine(Server, Port, UUID) ->
     chunter_cast(Server, Port, {machines, start, UUID}).
 

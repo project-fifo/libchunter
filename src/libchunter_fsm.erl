@@ -56,10 +56,10 @@ start_link(Server, Port, Command, From) ->
     gen_fsm:start_link(?MODULE, [Server, Port, Command, From], []).
 
 call(Server, Port, Command, From) ->
-    supervisor:start_child(libchunter_sup, [Server, Port, Command, From]).
+    supervisor:start_child(libchunter_fsm_sup, [Server, Port, Command, From]).
 
 cast(Server, Port, Command) ->
-    supervisor:start_child(libchunter_sup, [Server, Port, Command, undefined]).
+    supervisor:start_child(libchunter_fsm_sup, [Server, Port, Command, undefined]).
 
 
 %%%===================================================================
