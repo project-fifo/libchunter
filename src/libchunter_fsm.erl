@@ -68,7 +68,7 @@ cast(Server, Port, Command) ->
 
 init([Server, Port, Command, From]) ->
     {ok, connecting, #state{
-	   server = Server,
+	   server = binary_to_list(Server),
 	   command = Command,
 	   port = Port,
 	   from = From}, 0}.
