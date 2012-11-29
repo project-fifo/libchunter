@@ -18,11 +18,11 @@
 	]).
 
 %% gen_fsm callbacks
--export([init/1, 
+-export([init/1,
 	 handle_event/3,
-	 handle_sync_event/4, 
-	 handle_info/3, 
-	 terminate/3, 
+	 handle_sync_event/4,
+	 handle_info/3,
+	 terminate/3,
 	 code_change/4]).
 
 -export([
@@ -46,8 +46,8 @@
 %% initialize. To ensure a synchronized start-up procedure, this
 %% function does not return until Module:init/1 has returned.
 %%
-%% @spec start_link(Server, Handler, Command, From) -> {ok, Pid} 
-%%                                                   | ignore 
+%% @spec start_link(Server, Handler, Command, From) -> {ok, Pid}
+%%                                                   | ignore
 %%                                                   | {error, Error}
 %% @end
 %%--------------------------------------------------------------------
@@ -68,16 +68,16 @@ cast(Server, Port, Command) ->
 
 init([Server, Port, Command, From]) ->
     {ok, connecting, #state{
-	   server = binary_to_list(Server),
+	   server = Server,
 	   command = Command,
 	   port = Port,
 	   from = From}, 0}.
 
-connecting(_Event, #state{server=Sever, 
+connecting(_Event, #state{server=Sever,
 			  port=Port,
 			  from=From} = State) ->
     case gen_tcp:connect(Sever, Port, [binary, {active,false}]) of
-	{ok, Socket} ->
+	{ok, binSocket} ->
 	    {next_state, sending, State#state{socket = Socket}, 0};
 	_ ->
 	    gen_server:reply(From, {error, connection_failed}),
