@@ -77,7 +77,7 @@ connecting(_Event, #state{server=Sever,
 			  port=Port,
 			  from=From} = State) ->
     case gen_tcp:connect(Sever, Port, [binary, {active,false}]) of
-	{ok, binSocket} ->
+	{ok, Socket} ->
 	    {next_state, sending, State#state{socket = Socket}, 0};
 	_ ->
 	    gen_server:reply(From, {error, connection_failed}),
