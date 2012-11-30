@@ -44,7 +44,7 @@ ping(Server, Port) ->
 
 -spec start_machine(Server::inet:ip_address() | inet:hostname(),
 		    Port::inet:port_number(),
-		    UUID::fifi:uuid()) -> ok.
+		    UUID::fifo:uuid()) -> ok.
 
 start_machine(Server, Port, UUID) ->
     chunter_cast(Server, Port, {machines, start, UUID}).
