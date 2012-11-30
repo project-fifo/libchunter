@@ -17,7 +17,7 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
 
--define(SERVER, ?MODULE). 
+-define(SERVER, ?MODULE).
 
 -record(state, {}).
 
@@ -53,8 +53,15 @@ start_link() ->
 init([]) ->
     {ok, #state{}}.
 
+-spec call(Server::inet:ip_address() | inet:hostname(),
+	   Port::inet:port_number(),
+	  Command::fifo:chunter_message()) -> term().
 call(Server, Port, Command) ->
     gen_server:call(?SERVER, {call, Server, Port, Command}).
+
+-spec cast(Server::inet:ip_address() | inet:hostname(),
+	   Port::inet:port_number(),
+	  Command::fifo:chunter_message()) -> ok.
 
 cast(Server, Port, Command) ->
     gen_server:cast(?SERVER, {cast, Server, Port, Command}).
