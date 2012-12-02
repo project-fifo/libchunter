@@ -110,6 +110,8 @@ rcving(_Event, #state{socket=Socket, from=From} = State) ->
 	    {next_state, closing, State, 0}
     end.
 
+closing(_Event, #state{socket=undefined} = State) ->
+    {stop, normal, State};
 closing(_Event, #state{socket=Socket} = State) ->
     gen_tcp:close(Socket),
     {stop, normal, State}.
