@@ -28,8 +28,9 @@ start() ->
     application:start(lager),
     application:start(libchunter).
 
--spec(ping(Server::inet:ip_address() | inet:hostname(),
-	   Port::inet:port_number()) -> pong).
+-spec ping(Server::inet:ip_address() | inet:hostname(),
+	   Port::inet:port_number()) -> pong |
+					{'error', 'connection_failed'}.
 ping(Server, Port) ->
     libchunter_server:call(Server, Port, ping).
 
