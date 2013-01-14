@@ -39,10 +39,10 @@ ping(Server, Port) ->
 
 
 snapshot(Server, Port, UUID, SnapID) ->
-    libchunter_server:call(Server, Port, {snapshot, UUID, SnapID}).
+    libchunter_server:call(Server, Port, {machines, snapshot, UUID, SnapID}).
 
 delete_snapshot(Server, Port, UUID, SnapID) ->
-    libchunter_server:call(Server, Port, {snapshot, delete, UUID, SnapID}).
+    libchunter_server:call(Server, Port, {machines, snapshot, delete, UUID, SnapID}).
 
 %%--------------------------------------------------------------------
 %% @spec (pid(), auth(), machine()) -> ok
