@@ -17,6 +17,8 @@
          stop_machine/3,
          reboot_machine/3,
          update_machine/4,
+         snapshot/4,
+         delete_snapshot/4,
          start/0,
          ping/2
         ]).
@@ -34,6 +36,13 @@ start() ->
                                         {'error', 'connection_failed'}.
 ping(Server, Port) ->
     libchunter_server:call(Server, Port, ping).
+
+
+snapshot(Server, Port, UUID, SnapID) ->
+    libchunter_server:call(Server, Port, {snapshot, UUID, SnapID}).
+
+delete_snapshot(Server, Port, UUID, SnapID) ->
+    libchunter_server:call(Server, Port, {snapshot, delete, UUID, SnapID}).
 
 %%--------------------------------------------------------------------
 %% @spec (pid(), auth(), machine()) -> ok
