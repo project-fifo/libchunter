@@ -19,6 +19,7 @@
          update_machine/4,
          snapshot/4,
          delete_snapshot/4,
+         rollback_snapshot/4,
          start/0,
          ping/2
         ]).
@@ -43,6 +44,9 @@ snapshot(Server, Port, UUID, SnapID) ->
 
 delete_snapshot(Server, Port, UUID, SnapID) ->
     libchunter_server:call(Server, Port, {machines, snapshot, delete, UUID, SnapID}).
+
+rollback_snapshot(Server, Port, UUID, SnapID) ->
+    libchunter_server:call(Server, Port, {machines, snapshot, rollback, UUID, SnapID}).
 
 %%--------------------------------------------------------------------
 %% @spec (pid(), auth(), machine()) -> ok
