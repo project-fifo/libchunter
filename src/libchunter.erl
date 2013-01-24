@@ -10,15 +10,19 @@
 
 %% API
 -export([
-	 delete_machine/3,
-	 create_machine/6,
-	 start_machine/3,
-	 start_machine/4,
-	 stop_machine/3,
-	 reboot_machine/3,
-	 start/0,
-	 ping/2
-	]).
+         delete_machine/3,
+         create_machine/6,
+         start_machine/3,
+         start_machine/4,
+         stop_machine/3,
+         reboot_machine/3,
+         update_machine/4,
+         snapshot/4,
+         delete_snapshot/4,
+         rollback_snapshot/4,
+         start/0,
+         ping/2
+        ]).
 
 %%%===================================================================
 %%% API
@@ -29,10 +33,20 @@ start() ->
     application:start(libchunter).
 
 -spec ping(Server::inet:ip_address() | inet:hostname(),
-	   Port::inet:port_number()) -> pong |
-					{'error', 'connection_failed'}.
+           Port::inet:port_number()) -> pong |
+                                        {'error', 'connection_failed'}.
 ping(Server, Port) ->
     libchunter_server:call(Server, Port, ping).
+
+
+snapshot(Server, Port, UUID, SnapID) ->
+    libchunter_server:call(Server, Port, {machines, snapshot, UUID, SnapID}).
+
+delete_snapshot(Server, Port, UUID, SnapID) ->
+    libchunter_server:call(Server, Port, {machines, snapshot, delete, UUID, SnapID}).
+
+rollback_snapshot(Server, Port, UUID, SnapID) ->
+    libchunter_server:call(Server, Port, {machines, snapshot, rollback, UUID, SnapID}).
 
 %%--------------------------------------------------------------------
 %% @spec (pid(), auth(), machine()) -> ok
@@ -44,8 +58,8 @@ ping(Server, Port) ->
 %%--------------------------------------------------------------------
 
 -spec start_machine(Server::inet:ip_address() | inet:hostname(),
-		    Port::inet:port_number(),
-		    UUID::fifo:uuid()) -> ok.
+                    Port::inet:port_number(),
+                    UUID::fifo:uuid()) -> ok.
 
 start_machine(Server, Port, UUID) ->
     chunter_cast(Server, Port, {machines, start, UUID}).
@@ -60,8 +74,8 @@ start_machine(Server, Port, UUID) ->
 %%--------------------------------------------------------------------
 
 -spec delete_machine(Server::inet:ip_address() | inet:hostname(),
-		     Port::inet:port_number(),
-		     UUID::fifo:uuid()) -> ok.
+                     Port::inet:port_number(),
+                     UUID::fifo:uuid()) -> ok.
 
 delete_machine(Server, Port, UUID) ->
     chunter_cast(Server, Port, {machines, delete, UUID}).
@@ -77,15 +91,34 @@ delete_machine(Server, Port, UUID) ->
 %%--------------------------------------------------------------------
 
 -spec create_machine(Server::inet:ip_address() | inet:hostname(),
-		     Port::inet:port_number(),
-		     UUID::fifo:uuid(),
-		     PSpec::fifo:package(),
-		     DSpec::fifo:dataset(),
-		     Config::fifo:package()
-		    ) -> ok.
+                     Port::inet:port_number(),
+                     UUID::fifo:uuid(),
+                     PSpec::fifo:package(),
+                     DSpec::fifo:dataset(),
+                     Config::fifo:package()) -> ok.
 
 create_machine(Server, Port, UUID, PSpec, DSpec, Config) ->
     chunter_cast(Server, Port, {machines, create, UUID, PSpec, DSpec, Config}).
+
+%%--------------------------------------------------------------------
+%% @spec (pid(), auth(),
+%%        binary(), binary(), binary(),
+%%        [{binary(),binary()}], [{binary(),binary()}]) -> machine()
+%%
+%% @doc Updates a mchine
+%%
+%% @end
+%%--------------------------------------------------------------------
+
+-spec update_machine(Server::inet:ip_address() | inet:hostname(),
+                     Port::inet:port_number(),
+                     UUID::fifo:uuid(),
+                     Update::fifo:package()) -> ok.
+
+update_machine(Server, Port, UUID, Update) ->
+    chunter_cast(Server, Port, {machines, update, UUID, Update}).
+
+
 
 %%--------------------------------------------------------------------
 %% @spec (pid(), auth(),
@@ -96,23 +129,23 @@ create_machine(Server, Port, UUID, PSpec, DSpec, Config) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec start_machine(Server::inet:ip_address() | inet:hostname(),
-		    Port::inet:port_number(),
-		    UUID::fifo:uuid(),
-		    Imge::binary()) -> ok.
+                    Port::inet:port_number(),
+                    UUID::fifo:uuid(),
+                    Imge::binary()) -> ok.
 
 start_machine(Server, Port, UUID, Image) ->
     chunter_cast(Server, Port, {machines, start, UUID, Image}).
 
 -spec stop_machine(Server::inet:ip_address() | inet:hostname(),
-		   Port::inet:port_number(),
-		   UUID::fifo:uuid()) -> ok.
+                   Port::inet:port_number(),
+                   UUID::fifo:uuid()) -> ok.
 
 stop_machine(Server, Port, UUID) ->
     chunter_cast(Server, Port, {machines, stop, UUID}).
 
 -spec reboot_machine(Server::inet:ip_address() | inet:hostname(),
-		     Port::inet:port_number(),
-		     UUID::fifo:uuid()) -> ok.
+                     Port::inet:port_number(),
+                     UUID::fifo:uuid()) -> ok.
 
 reboot_machine(Server, Port, UUID) ->
     chunter_cast(Server, Port, {machines, reboot, UUID}).
@@ -122,23 +155,23 @@ reboot_machine(Server, Port, UUID) ->
 %%% Internal functions
 %%%===================================================================
 
-%chunter_call(Server, Port,{Auth, _}, Call) ->
-%    chunter_call(Server, Port, Call);
+                                                %chunter_call(Server, Port,{Auth, _}, Call) ->
+                                                %    chunter_call(Server, Port, Call);
 
-%chunter_call(Server, Port, Call) ->
-%    try
-%	gen_server:call(Server, Port,{call, Auth, Call})
-%    catch
-%	T:E ->
-%	    lager:error([{fifi_component, libchunter}, {user, Auth}],
-%			"libchunter:call - Error ~p:~p, Call: ~p.",
-%			[T, E, Call]),
-%	    {error, cant_call}
-%    end.
+                                                %chunter_call(Server, Port, Call) ->
+                                                %    try
+                                                %   gen_server:call(Server, Port,{call, Auth, Call})
+                                                %    catch
+                                                %   T:E ->
+                                                %       lager:error([{fifi_component, libchunter}, {user, Auth}],
+                                                %           "libchunter:call - Error ~p:~p, Call: ~p.",
+                                                %           [T, E, Call]),
+                                                %       {error, cant_call}
+                                                %    end.
 
 -spec chunter_cast(Server::inet:ip_address() | inet:hostname(),
-		   Port::inet:port_number(),
-		   Cast::fifo:chunter_message()) -> ok.
+                   Port::inet:port_number(),
+                   Cast::fifo:chunter_message()) -> ok.
 
 chunter_cast(Server, Port, Cast) ->
     libchunter_server:cast(Server, Port, Cast).
