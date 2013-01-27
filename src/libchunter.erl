@@ -51,7 +51,6 @@ console_open(Server, Port, VM, Proc) ->
 send_open(Console, Data) ->
     libchunter_server:send(Console, Data).
 
-
 snapshot(Server, Port, UUID, SnapID) ->
     libchunter_server:call(Server, Port, {machines, snapshot, UUID, SnapID}).
 
