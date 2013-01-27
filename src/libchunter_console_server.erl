@@ -16,7 +16,7 @@
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
-         terminate/2, code_change/3, send/2]).
+         terminate/2, code_change/3, send/2, close/1]).
 
 -define(SERVER, ?MODULE).
 
@@ -41,6 +41,9 @@ console(Server, Port, VM, Proc) ->
 
 send(Console, Data) ->
     gen_server:cast(Console, {send, Data}).
+
+close(Console) ->
+    gen_server:cast(Console, close).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -97,6 +100,9 @@ handle_call(_Request, _From, State) ->
 handle_cast({send, Data}, State = #state{socket = Socket}) ->
     gen_tcp:send(Socket, Data),
     {noreply, State};
+
+handle_cast(close, State) ->
+    {stop, normal, State};
 
 handle_cast(_Msg, State) ->
     {noreply, State}.
