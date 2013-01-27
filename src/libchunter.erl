@@ -17,10 +17,13 @@
          stop_machine/3,
          reboot_machine/3,
          update_machine/4,
+         console_open/3,
+         console_open/4,
          snapshot/4,
          delete_snapshot/4,
          rollback_snapshot/4,
          start/0,
+         send_open/2,
          ping/2
         ]).
 
@@ -37,6 +40,16 @@ start() ->
                                         {'error', 'connection_failed'}.
 ping(Server, Port) ->
     libchunter_server:call(Server, Port, ping).
+
+
+console_open(Server, Port, VM) ->
+    console_open(Server, Port, VM, self()).
+
+console_open(Server, Port, VM, Proc) ->
+    libchunter_server:console(Server, Port, VM, Proc).
+
+send_open(Console, Data) ->
+    libchunter_server:send(Console, Data).
 
 
 snapshot(Server, Port, UUID, SnapID) ->

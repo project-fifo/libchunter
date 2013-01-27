@@ -1,5 +1,4 @@
-
--module(libchunter_sup).
+-module(libchunter_console_sup).
 
 -behaviour(supervisor).
 
@@ -10,7 +9,7 @@
 -export([init/1]).
 
 %% Helper macro for declaring children of supervisor
--define(CHILD(I, Type), {I, {I, start_link, []}, permanent, 5000, Type, [I]}).
+-define(CHILD(I, Type), {I, {I, start_link, []}, temporary, 5000, Type, [I]}).
 
 %% ===================================================================
 %% API functions
@@ -24,8 +23,4 @@ start_link() ->
 %% ===================================================================
 
 init([]) ->
-    {ok, {{one_for_one, 5, 10},
-          [?CHILD(libchunter_server, worker),
-           ?CHILD(libchunter_console_sup, supervisor),
-           ?CHILD(libchunter_fsm_sup, supervisor)]}}.
-
+    {ok, {{simple_one_for_one, 5, 10}, [?CHILD(libchunter_console_server, worker)]}}.
