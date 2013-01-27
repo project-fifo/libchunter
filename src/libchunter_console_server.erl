@@ -1,25 +1,26 @@
 %%%-------------------------------------------------------------------
 %%% @author Heinz Nikolaus Gies <heinz@licenser.net>
-%%% @copyright (C) 2012, Heinz Nikolaus Gies
+%%% @copyright (C) 2013, Heinz Nikolaus Gies
 %%% @doc
 %%%
 %%% @end
-%%% Created :  9 Oct 2012 by Heinz Nikolaus Gies <heinz@licenser.net>
+%%% Created : 25 Jan 2013 by Heinz Nikolaus Gies <heinz@licenser.net>
 %%%-------------------------------------------------------------------
--module(libchunter_server).
+-module(libchunter_console_server).
 
 -behaviour(gen_server).
 
 %% API
--export([start_link/0, call/3, cast/3]).
+-export([start_link/4,
+         console/4]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
-         terminate/2, code_change/3, console/4]).
+         terminate/2, code_change/3, send/2, close/1]).
 
 -define(SERVER, ?MODULE).
 
--record(state, {}).
+-record(state, {socket, proc}).
 
 %%%===================================================================
 %%% API
@@ -32,8 +33,17 @@
 %% @spec start_link() -> {ok, Pid} | ignore | {error, Error}
 %% @end
 %%--------------------------------------------------------------------
-start_link() ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+start_link(Server, Port, VM, From) ->
+    gen_server:start_link(?MODULE, [Server, Port, VM, From], []).
+
+console(Server, Port, VM, Proc) ->
+    supervisor:start_child(libchunter_console_sup, [Server, Port, VM, Proc]).
+
+send(Console, Data) ->
+    gen_server:cast(Console, {send, Data}).
+
+close(Console) ->
+    gen_server:cast(Console, close).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -50,24 +60,14 @@ start_link() ->
 %%                     {stop, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([]) ->
-    {ok, #state{}}.
-
--spec call(Server::inet:ip_address() | inet:hostname(),
-           Port::inet:port_number(),
-           Command::fifo:chunter_message()) -> term().
-call(Server, Port, Command) ->
-    gen_server:call(?SERVER, {call, Server, Port, Command}).
-
--spec cast(Server::inet:ip_address() | inet:hostname(),
-           Port::inet:port_number(),
-           Command::fifo:chunter_message()) -> ok.
-
-cast(Server, Port, Command) ->
-    gen_server:cast(?SERVER, {cast, Server, Port, Command}).
-
-console(Server, Port, VM, Proc) ->
-    gen_server:call(?SERVER, {console, Server, Port, VM, Proc}).
+init([Server, Port, VM, Proc]) ->
+    case gen_tcp:connect(Server, Port, [binary, {active, true}]) of
+        {ok, Socket} ->
+            ok = gen_tcp:send(Socket, term_to_binary({console, VM})),
+            {ok, #state{socket = Socket, proc = Proc}};
+        _ ->
+            {stop, connection_failed}
+    end.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -83,14 +83,6 @@ console(Server, Port, VM, Proc) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call({call, Server, Port, Command}, Form, State) ->
-    libchunter_fsm:call(Server, Port, Command, Form),
-    {noreply, State};
-
-handle_call({console, Server, Port, VM, Proc}, _From, State) ->
-    Cons = libchunter_console_server:console(Server, Port, VM, Proc),
-    {reply, Cons, State};
-
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.
@@ -105,9 +97,12 @@ handle_call(_Request, _From, State) ->
 %%                                  {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_cast({cast, Server, Port, Command}, State) ->
-    libchunter_fsm:cast(Server, Port, Command),
+handle_cast({send, Data}, State = #state{socket = Socket}) ->
+    gen_tcp:send(Socket, Data),
     {noreply, State};
+
+handle_cast(close, State) ->
+    {stop, normal, State};
 
 handle_cast(_Msg, State) ->
     {noreply, State}.
@@ -122,6 +117,15 @@ handle_cast(_Msg, State) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
+
+handle_info({tcp, _Socket, Data}, State = #state{proc = Proc}) ->
+    Proc ! {data, Data},
+    {noreply, State};
+
+handle_info({tcp_closed, _Socket}, State = #state{proc = Proc}) ->
+    Proc ! closed,
+    {noreply, State};
+
 handle_info(_Info, State) ->
     {noreply, State}.
 

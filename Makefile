@@ -29,6 +29,8 @@ docs:
 ## Developer targets
 ##
 
+console:
+	erl -pa ebin deps/*/ebin -s libchunter
 xref:
 	$(REBAR) xref skip_deps=true
 
