@@ -75,7 +75,7 @@ init([Server, Port, Command, From]) ->
 connecting(_Event, #state{server=Sever,
                           port=Port,
                           from=From} = State) ->
-    case gen_tcp:connect(Sever, Port, [binary, {active,false}]) of
+    case gen_tcp:connect(Sever, Port, [binary, {active,false}, {packet, 4}]) of
         {ok, Socket} ->
             {next_state, sending, State#state{socket = Socket}, 0};
         _ ->
