@@ -137,6 +137,9 @@ handle_cast(_Msg, State) ->
 %% @end
 %%--------------------------------------------------------------------
 
+handle_info({tcp_closed, _Socket}, State) ->
+    {stop, State};
+
 handle_info(_Info, State) ->
     {noreply, State}.
 
