@@ -11,8 +11,8 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/5,
-         dtrace/5]).
+-export([start_link/4,
+         dtrace/4]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -20,7 +20,7 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {socket, proc}).
+-record(state, {socket, uuid}).
 
 %%%===================================================================
 %%% API
@@ -33,20 +33,20 @@
 %% @spec start_link() -> {ok, Pid} | ignore | {error, Error}
 %% @end
 %%--------------------------------------------------------------------
-start_link(Server, Port, UUID, Script, From) ->
-    gen_server:start_link(?MODULE, [Server, Port, UUID, Script, From], []).
+start_link(Server, Port, UUID, Script) ->
+    gen_server:start_link({global, {dtrace, UUID}}, ?MODULE, [Server, Port, UUID, Script], []).
 
-dtrace(Server, Port, UUID, Script, Proc) ->
-    supervisor:start_child(libchunter_dtrace_sup, [Server, Port, UUID, Script, Proc]).
+dtrace(Server, Port, UUID, Script) ->
+    supervisor:start_child(libchunter_dtrace_sup, [Server, Port, UUID, Script]).
 
 consume(UUID) ->
-    gen_server:cast(UUID, consume).
+    gen_server:cast({global, {dtrace, UUID}}, consume).
 
 walk(UUID) ->
-    gen_server:cast(UUID, walk).
+    gen_server:cast({global, {dtrace, UUID}}, walk).
 
-close(Dtrace) ->
-    gen_server:cast(Dtrace, close).
+close(UUID) ->
+    gen_server:cast({global, {dtrace, UUID}}, close).
 
 
 %%%===================================================================
@@ -64,11 +64,11 @@ close(Dtrace) ->
 %%                     {stop, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([Server, Port, Script, Proc]) ->
+init([Server, Port, UUID, Script]) ->
     case gen_tcp:connect(Server, Port, [binary, {active, false}, {packet, 4}]) of
         {ok, Socket} ->
             ok = gen_tcp:send(Socket, term_to_binary({dtrace, Script})),
-            {ok, #state{socket = Socket, proc = Proc}};
+            {ok, #state{socket = Socket, uuid = UUID}};
         _ ->
             {stop, connection_failed}
     end.
@@ -136,14 +136,6 @@ handle_cast(_Msg, State) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-
-handle_info({tcp, _Socket, Data}, State = #state{proc = Proc}) ->
-    Proc ! {data, Data},
-    {noreply, State};
-
-handle_info({tcp_closed, _Socket}, State = #state{proc = Proc}) ->
-    Proc ! closed,
-    {noreply, State};
 
 handle_info(_Info, State) ->
     {noreply, State}.
