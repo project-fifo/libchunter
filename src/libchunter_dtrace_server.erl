@@ -40,13 +40,13 @@ dtrace(Server, Port, UUID, Script) ->
     supervisor:start_child(libchunter_dtrace_sup, [Server, Port, UUID, Script]).
 
 consume(UUID) ->
-    gen_server:cast({global, {dtrace, UUID}}, consume).
+    gen_server:call({global, {dtrace, UUID}}, consume).
 
 walk(UUID) ->
-    gen_server:cast({global, {dtrace, UUID}}, walk).
+    gen_server:call({global, {dtrace, UUID}}, walk).
 
 close(UUID) ->
-    gen_server:cast({global, {dtrace, UUID}}, close).
+    gen_server:call({global, {dtrace, UUID}}, close).
 
 
 %%%===================================================================
