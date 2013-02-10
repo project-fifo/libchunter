@@ -34,19 +34,19 @@
 %% @end
 %%--------------------------------------------------------------------
 start_link(Server, Port, UUID, Script) ->
-    gen_server:start_link({global, {dtrace, UUID}}, ?MODULE, [Server, Port, UUID, Script], []).
+    gen_server:start_link(?MODULE, [Server, Port, UUID, Script], []).
 
 dtrace(Server, Port, UUID, Script) ->
     supervisor:start_child(libchunter_dtrace_sup, [Server, Port, UUID, Script]).
 
-consume(UUID) ->
-    gen_server:call({global, {dtrace, UUID}}, consume).
+consume(Pid) ->
+    gen_server:call(Pid, consume).
 
-walk(UUID) ->
-    gen_server:call({global, {dtrace, UUID}}, walk).
+walk(Pid) ->
+    gen_server:call(Pid, walk).
 
-close(UUID) ->
-    gen_server:call({global, {dtrace, UUID}}, close).
+close(Pid) ->
+    gen_server:cast(Pid, close).
 
 
 %%%===================================================================
@@ -67,7 +67,8 @@ close(UUID) ->
 init([Server, Port, UUID, Script]) ->
     case gen_tcp:connect(Server, Port, [binary, {active, false}, {packet, 4}]) of
         {ok, Socket} ->
-            ok = gen_tcp:send(Socket, term_to_binary({dtrace, Script})),
+            R = gen_tcp:send(Socket, term_to_binary({dtrace, Script})),
+            io:format("open: ~p~n", [R]),
             {ok, #state{socket = Socket, uuid = UUID}};
         _ ->
             {stop, connection_failed}
@@ -89,7 +90,7 @@ init([Server, Port, UUID, Script]) ->
 %%--------------------------------------------------------------------
 handle_call(consume, _From, State = #state{socket = Socket}) ->
     gen_tcp:send(Socket, term_to_binary(consume)),
-    case gen_tcp:recv(Socket, 100) of
+    case gen_tcp:recv(Socket, 0, 100) of
         {ok, Bin} ->
             {reply, binary_to_term(Bin), State};
         E ->
@@ -98,7 +99,7 @@ handle_call(consume, _From, State = #state{socket = Socket}) ->
 
 handle_call(walk, _From, State = #state{socket = Socket}) ->
     gen_tcp:send(Socket, term_to_binary(walk)),
-    case gen_tcp:recv(Socket, 100) of
+    case gen_tcp:recv(Socket, 0, 100) of
         {ok, Bin} ->
             {reply, binary_to_term(Bin), State};
         E ->
@@ -138,9 +139,10 @@ handle_cast(_Msg, State) ->
 %%--------------------------------------------------------------------
 
 handle_info({tcp_closed, _Socket}, State) ->
-    {stop, State};
+    {stop, closed, State};
 
-handle_info(_Info, State) ->
+handle_info(Info, State) ->
+    io:format("info: ~p.~n", [Info]),
     {noreply, State}.
 
 %%--------------------------------------------------------------------
