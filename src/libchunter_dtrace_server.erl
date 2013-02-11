@@ -11,8 +11,8 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/4,
-         dtrace/4]).
+-export([start_link/3,
+         dtrace/3]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -20,7 +20,7 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {socket, uuid}).
+-record(state, {socket}).
 
 %%%===================================================================
 %%% API
@@ -33,11 +33,11 @@
 %% @spec start_link() -> {ok, Pid} | ignore | {error, Error}
 %% @end
 %%--------------------------------------------------------------------
-start_link(Server, Port, UUID, Script) ->
-    gen_server:start_link(?MODULE, [Server, Port, UUID, Script], []).
+start_link(Server, Port, Script) ->
+    gen_server:start_link(?MODULE, [Server, Port, Script], []).
 
-dtrace(Server, Port, UUID, Script) ->
-    supervisor:start_child(libchunter_dtrace_sup, [Server, Port, UUID, Script]).
+dtrace(Server, Port, Script) ->
+    supervisor:start_child(libchunter_dtrace_sup, [Server, Port, Script]).
 
 consume(Pid) ->
     gen_server:call(Pid, consume).
@@ -64,12 +64,12 @@ close(Pid) ->
 %%                     {stop, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([Server, Port, UUID, Script]) ->
+init([Server, Port, Script]) ->
     case gen_tcp:connect(Server, Port, [binary, {active, false}, {packet, 4}]) of
         {ok, Socket} ->
             R = gen_tcp:send(Socket, term_to_binary({dtrace, Script})),
             io:format("open: ~p~n", [R]),
-            {ok, #state{socket = Socket, uuid = UUID}};
+            {ok, #state{socket = Socket}};
         _ ->
             {stop, connection_failed}
     end.
