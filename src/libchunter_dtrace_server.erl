@@ -65,7 +65,7 @@ close(Pid) ->
 %% @end
 %%--------------------------------------------------------------------
 init([Server, Port, Script]) ->
-    case gen_tcp:connect(Server, Port, [binary, {active, false}, {packet, 4}]) of
+    case gen_tcp:connect(Server, Port, [binary, {active, false}, {packet, 4}], 100) of
         {ok, Socket} ->
             R = gen_tcp:send(Socket, term_to_binary({dtrace, Script})),
             io:format("open: ~p~n", [R]),
