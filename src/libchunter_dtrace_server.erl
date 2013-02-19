@@ -6,21 +6,21 @@
 %%% @end
 %%% Created : 25 Jan 2013 by Heinz Nikolaus Gies <heinz@licenser.net>
 %%%-------------------------------------------------------------------
--module(libchunter_console_server).
+-module(libchunter_dtrace_server).
 
 -behaviour(gen_server).
 
 %% API
--export([start_link/4,
-         console/4]).
+-export([start_link/3,
+         dtrace/3]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
-         terminate/2, code_change/3, send/2, close/1]).
+         terminate/2, code_change/3, walk/1, consume/1, close/1]).
 
 -define(SERVER, ?MODULE).
 
--record(state, {socket, proc}).
+-record(state, {socket}).
 
 %%%===================================================================
 %%% API
@@ -33,17 +33,21 @@
 %% @spec start_link() -> {ok, Pid} | ignore | {error, Error}
 %% @end
 %%--------------------------------------------------------------------
-start_link(Server, Port, VM, From) ->
-    gen_server:start_link(?MODULE, [Server, Port, VM, From], []).
+start_link(Server, Port, Script) ->
+    gen_server:start_link(?MODULE, [Server, Port, Script], []).
 
-console(Server, Port, VM, Proc) ->
-    supervisor:start_child(libchunter_console_sup, [Server, Port, VM, Proc]).
+dtrace(Server, Port, Script) ->
+    supervisor:start_child(libchunter_dtrace_sup, [Server, Port, Script]).
 
-send(Console, Data) ->
-    gen_server:cast(Console, {send, Data}).
+consume(Pid) ->
+    gen_server:call(Pid, consume).
 
-close(Console) ->
-    gen_server:cast(Console, close).
+walk(Pid) ->
+    gen_server:call(Pid, walk).
+
+close(Pid) ->
+    gen_server:cast(Pid, close).
+
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -60,11 +64,12 @@ close(Console) ->
 %%                     {stop, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([Server, Port, VM, Proc]) ->
-    case gen_tcp:connect(Server, Port, [binary, {active, true}, {packet, 4}], 100) of
+init([Server, Port, Script]) ->
+    case gen_tcp:connect(Server, Port, [binary, {active, false}, {packet, 4}], 100) of
         {ok, Socket} ->
-            ok = gen_tcp:send(Socket, term_to_binary({console, VM})),
-            {ok, #state{socket = Socket, proc = Proc}};
+            R = gen_tcp:send(Socket, term_to_binary({dtrace, Script})),
+            io:format("open: ~p~n", [R]),
+            {ok, #state{socket = Socket}};
         _ ->
             {stop, connection_failed}
     end.
@@ -83,6 +88,24 @@ init([Server, Port, VM, Proc]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
+handle_call(consume, _From, State = #state{socket = Socket}) ->
+    gen_tcp:send(Socket, term_to_binary(consume)),
+    case gen_tcp:recv(Socket, 0, 100) of
+        {ok, Bin} ->
+            {reply, binary_to_term(Bin), State};
+        E ->
+            {reply, {error, E}, State}
+    end;
+
+handle_call(walk, _From, State = #state{socket = Socket}) ->
+    gen_tcp:send(Socket, term_to_binary(walk)),
+    case gen_tcp:recv(Socket, 0, 100) of
+        {ok, Bin} ->
+            {reply, binary_to_term(Bin), State};
+        E ->
+            {reply, {error, E}, State}
+    end;
+
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.
@@ -97,9 +120,6 @@ handle_call(_Request, _From, State) ->
 %%                                  {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_cast({send, Data}, State = #state{socket = Socket}) ->
-    gen_tcp:send(Socket, Data),
-    {noreply, State};
 
 handle_cast(close, State) ->
     {stop, normal, State};
@@ -118,15 +138,11 @@ handle_cast(_Msg, State) ->
 %% @end
 %%--------------------------------------------------------------------
 
-handle_info({tcp, _Socket, Data}, State = #state{proc = Proc}) ->
-    Proc ! {data, Data},
-    {noreply, State};
+handle_info({tcp_closed, _Socket}, State) ->
+    {stop, closed, State};
 
-handle_info({tcp_closed, _Socket}, State = #state{proc = Proc}) ->
-    Proc ! closed,
-    {noreply, State};
-
-handle_info(_Info, State) ->
+handle_info(Info, State) ->
+    io:format("info: ~p.~n", [Info]),
     {noreply, State}.
 
 %%--------------------------------------------------------------------
