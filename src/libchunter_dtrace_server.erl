@@ -1,25 +1,26 @@
 %%%-------------------------------------------------------------------
 %%% @author Heinz Nikolaus Gies <heinz@licenser.net>
-%%% @copyright (C) 2012, Heinz Nikolaus Gies
+%%% @copyright (C) 2013, Heinz Nikolaus Gies
 %%% @doc
 %%%
 %%% @end
-%%% Created :  9 Oct 2012 by Heinz Nikolaus Gies <heinz@licenser.net>
+%%% Created : 25 Jan 2013 by Heinz Nikolaus Gies <heinz@licenser.net>
 %%%-------------------------------------------------------------------
--module(libchunter_server).
+-module(libchunter_dtrace_server).
 
 -behaviour(gen_server).
 
 %% API
--export([start_link/0, call/3, cast/3]).
+-export([start_link/3,
+         dtrace/3]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
-         terminate/2, code_change/3, console/4]).
+         terminate/2, code_change/3, walk/1, consume/1, close/1]).
 
 -define(SERVER, ?MODULE).
 
--record(state, {}).
+-record(state, {socket}).
 
 %%%===================================================================
 %%% API
@@ -32,8 +33,21 @@
 %% @spec start_link() -> {ok, Pid} | ignore | {error, Error}
 %% @end
 %%--------------------------------------------------------------------
-start_link() ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+start_link(Server, Port, Script) ->
+    gen_server:start_link(?MODULE, [Server, Port, Script], []).
+
+dtrace(Server, Port, Script) ->
+    supervisor:start_child(libchunter_dtrace_sup, [Server, Port, Script]).
+
+consume(Pid) ->
+    gen_server:call(Pid, consume).
+
+walk(Pid) ->
+    gen_server:call(Pid, walk).
+
+close(Pid) ->
+    gen_server:cast(Pid, close).
+
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -50,24 +64,15 @@ start_link() ->
 %%                     {stop, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([]) ->
-    {ok, #state{}}.
-
--spec call(Server::inet:ip_address() | inet:hostname(),
-           Port::inet:port_number(),
-           Command::fifo:chunter_message()) -> term().
-call(Server, Port, Command) ->
-    gen_server:call(?SERVER, {call, Server, Port, Command}).
-
--spec cast(Server::inet:ip_address() | inet:hostname(),
-           Port::inet:port_number(),
-           Command::fifo:chunter_message()) -> ok.
-
-cast(Server, Port, Command) ->
-    gen_server:cast(?SERVER, {cast, Server, Port, Command}).
-
-console(Server, Port, VM, Proc) ->
-    gen_server:call(?SERVER, {console, Server, Port, VM, Proc}).
+init([Server, Port, Script]) ->
+    case gen_tcp:connect(Server, Port, [binary, {active, false}, {packet, 4}], 100) of
+        {ok, Socket} ->
+            R = gen_tcp:send(Socket, term_to_binary({dtrace, Script})),
+            io:format("open: ~p~n", [R]),
+            {ok, #state{socket = Socket}};
+        _ ->
+            {stop, connection_failed}
+    end.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -83,13 +88,23 @@ console(Server, Port, VM, Proc) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call({call, Server, Port, Command}, Form, State) ->
-    libchunter_fsm:call(Server, Port, Command, Form),
-    {noreply, State};
+handle_call(consume, _From, State = #state{socket = Socket}) ->
+    gen_tcp:send(Socket, term_to_binary(consume)),
+    case gen_tcp:recv(Socket, 0, 100) of
+        {ok, Bin} ->
+            {reply, binary_to_term(Bin), State};
+        E ->
+            {reply, {error, E}, State}
+    end;
 
-handle_call({console, Server, Port, VM, Proc}, _From, State) ->
-    Cons = libchunter_console_server:console(Server, Port, VM, Proc),
-    {reply, Cons, State};
+handle_call(walk, _From, State = #state{socket = Socket}) ->
+    gen_tcp:send(Socket, term_to_binary(walk)),
+    case gen_tcp:recv(Socket, 0, 100) of
+        {ok, Bin} ->
+            {reply, binary_to_term(Bin), State};
+        E ->
+            {reply, {error, E}, State}
+    end;
 
 handle_call(_Request, _From, State) ->
     Reply = ok,
@@ -105,9 +120,9 @@ handle_call(_Request, _From, State) ->
 %%                                  {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_cast({cast, Server, Port, Command}, State) ->
-    libchunter_fsm:cast(Server, Port, Command),
-    {noreply, State};
+
+handle_cast(close, State) ->
+    {stop, normal, State};
 
 handle_cast(_Msg, State) ->
     {noreply, State}.
@@ -122,7 +137,12 @@ handle_cast(_Msg, State) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_info(_Info, State) ->
+
+handle_info({tcp_closed, _Socket}, State) ->
+    {stop, closed, State};
+
+handle_info(Info, State) ->
+    io:format("info: ~p.~n", [Info]),
     {noreply, State}.
 
 %%--------------------------------------------------------------------

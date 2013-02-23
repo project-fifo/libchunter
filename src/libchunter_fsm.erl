@@ -12,25 +12,25 @@
 
 %% API
 -export([
-	 call/4,
-	 cast/3,
-	 start_link/4
-	]).
+         call/4,
+         cast/3,
+         start_link/4
+        ]).
 
 %% gen_fsm callbacks
 -export([init/1,
-	 handle_event/3,
-	 handle_sync_event/4,
-	 handle_info/3,
-	 terminate/3,
-	 code_change/4]).
+         handle_event/3,
+         handle_sync_event/4,
+         handle_info/3,
+         terminate/3,
+         code_change/4]).
 
 -export([
-	 connecting/2,
-	 sending/2,
-	 rcving/2,
-	 closing/2
-	]).
+         connecting/2,
+         sending/2,
+         rcving/2,
+         closing/2
+        ]).
 
 -define(SERVER, ?MODULE).
 
@@ -61,38 +61,37 @@ call(Server, Port, Command, From) ->
 cast(Server, Port, Command) ->
     supervisor:start_child(libchunter_fsm_sup, [Server, Port, Command, undefined]).
 
-
 %%%===================================================================
 %%% gen_fsm callbacks
 %%%===================================================================
 
 init([Server, Port, Command, From]) ->
     {ok, connecting, #state{
-	   server = Server,
-	   command = Command,
-	   port = Port,
-	   from = From}, 0}.
+           server = Server,
+           command = Command,
+           port = Port,
+           from = From}, 0}.
 
 connecting(_Event, #state{server=Sever,
-			  port=Port,
-			  from=From} = State) ->
-    case gen_tcp:connect(Sever, Port, [binary, {active,false}]) of
-	{ok, Socket} ->
-	    {next_state, sending, State#state{socket = Socket}, 0};
-	_ ->
-	    gen_server:reply(From, {error, connection_failed}),
-	    {next_state, closing, State, 0}
+                          port=Port,
+                          from=From} = State) ->
+    case gen_tcp:connect(Sever, Port, [binary, {active,false}, {packet, 4}], 100) of
+        {ok, Socket} ->
+            {next_state, sending, State#state{socket = Socket}, 0};
+        _ ->
+            gen_server:reply(From, {error, connection_failed}),
+            {next_state, closing, State, 0}
     end.
 
 sending(_Event, #state{socket=Socket,
-		       command = Command,
-		       from=From} = State) ->
+                       command = Command,
+                       from=From} = State) ->
     case gen_tcp:send(Socket, term_to_binary(Command)) of
-	ok ->
-	    {next_state, rcving, State, 0};
-	_ ->
-	    gen_server:reply(From, {error, connection_failed}),
-	    {next_state, closing, State, 0}
+        ok ->
+            {next_state, rcving, State, 0};
+        _ ->
+            gen_server:reply(From, {error, connection_failed}),
+            {next_state, closing, State, 0}
     end.
 
 
@@ -102,12 +101,12 @@ rcving(_Event, #state{socket=Socket, from=undefined} = State) ->
 
 rcving(_Event, #state{socket=Socket, from=From} = State) ->
     case gen_tcp:recv(Socket, 0) of
-	{ok, Res} ->
-	    gen_server:reply(From, binary_to_term(Res)),
-	    {next_state, closing, State, 0};
-	_ ->
-	    gen_server:reply(From, {error, connection_failed}),
-	    {next_state, closing, State, 0}
+        {ok, Res} ->
+            gen_server:reply(From, binary_to_term(Res)),
+            {next_state, closing, State, 0};
+        _ ->
+            gen_server:reply(From, {error, connection_failed}),
+            {next_state, closing, State, 0}
     end.
 
 closing(_Event, #state{socket=undefined} = State) ->
