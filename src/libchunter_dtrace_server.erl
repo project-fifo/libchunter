@@ -91,22 +91,36 @@ init([Server, Port, Script]) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_call(consume, _From, State = #state{socket = Socket}) ->
-    gen_tcp:send(Socket, term_to_binary(consume)),
-    case gen_tcp:recv(Socket, 0, ?TIMEOUT) of
-        {ok, Bin} ->
-            {reply, binary_to_term(Bin), State};
+    Ref = make_ref(),
+    case gen_tcp:send(Socket, term_to_binary({consume, Ref})) of
+        ok ->
+            case gen_tcp:recv(Socket, 0, ?TIMEOUT) of
+                {ok, Bin} ->
+                    {reply, binary_to_term(Bin), State};
+                E ->
+                    {reply, {error, Ref, E}, State}
+            end;
         E ->
-            {reply, {error, E}, State}
+            {reply, {error, Ref, E}, State}
     end;
 
+
 handle_call(walk, _From, State = #state{socket = Socket}) ->
-    gen_tcp:send(Socket, term_to_binary(walk)),
-    case gen_tcp:recv(Socket, 0, ?TIMEOUT) of
-        {ok, Bin} ->
-            {reply, binary_to_term(Bin), State};
+    Ref = make_ref(),
+    case gen_tcp:send(Socket, term_to_binary({walk, Ref})) of
+        ok ->
+            case gen_tcp:recv(Socket, 0, ?TIMEOUT) of
+                {ok, Bin} ->
+                    {reply, binary_to_term(Bin), State};
+                E ->
+                    {reply, {error, Ref, E}, State}
+            end;
         E ->
-            {reply, {error, E}, State}
+            {reply, {error, Ref, E}, State}
     end;
+
+
+
 
 handle_call(_Request, _From, State) ->
     Reply = ok,
