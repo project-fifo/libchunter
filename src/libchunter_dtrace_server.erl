@@ -45,7 +45,7 @@ consume(Pid) ->
     gen_server:call(Pid, consume).
 
 walk(Pid) ->
-    gen_server:call(Pid, {walk, fun (X) -> X end}).
+    gen_server:call(Pid, {walk, identity}).
 
 walk(Pid, Fn) ->
     gen_server:call(Pid, {walk, Fn}).
@@ -110,7 +110,6 @@ handle_call(consume, _From, State = #state{socket = Socket}) ->
 
 handle_call({walk, Fn}, _From, State = #state{socket = Socket}) ->
     Ref = make_ref(),
-
     Now1 = now(),
     case gen_tcp:send(Socket, term_to_binary({walk, Ref, Fn})) of
         ok ->
@@ -120,19 +119,19 @@ handle_call({walk, Fn}, _From, State = #state{socket = Socket}) ->
                 {ok, RefBin0} when RefBin0 =:= RefBin ->
                     Now3 = now(),
                     case gen_tcp:recv(Socket, 0, ?TIMEOUT) of
-                        {ok, Bin} when  RefBin == Bin->
+                        {ok, Bin} ->
                             {reply, binary_to_term(Bin), State};
                         {error, timeout} = E ->
                             lager:warning("Timeout in rcv: ~p + ~p", [timer:now_diff(now(), Now3)]),
-                            {reply, {error, rcv, Ref, E}, State};
+                            {reply, {error, rcv0, Ref, E}, State};
                         E ->
-                            {reply, {error, rcv, Ref, E}, State}
+                            {reply, {error, rcv0, Ref, E}, State}
                     end;
                 {error, timeout} = E ->
                     lager:warning("Timeout in ok- rcv ok: ~p", [timer:now_diff(now(), Now2)]),
-                    {reply, {error, rcv, Ref, E}, State};
+                    {reply, {error, rcv1, Ref, E}, State};
                 E ->
-                    {reply, {error, rcv, Ref, E}, State}
+                    {reply, {error, rcv1, Ref, E}, State}
             end;
 
 
