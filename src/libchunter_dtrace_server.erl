@@ -45,7 +45,7 @@ consume(Pid) ->
     gen_server:call(Pid, consume).
 
 walk(Pid) ->
-    gen_server:call(Pid, {walk, fun (X) -> X end}).
+    gen_server:call(Pid, {walk, fun identity/1}).
 
 walk(Pid, Fn) ->
     gen_server:call(Pid, {walk, Fn}).
@@ -212,3 +212,6 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+identity(D) ->
+    D.
