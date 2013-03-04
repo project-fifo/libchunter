@@ -16,11 +16,11 @@
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
-         terminate/2, code_change/3, walk/1, consume/1, close/1]).
+         terminate/2, code_change/3, walk/1, walk/2, consume/1, close/1]).
 
 -define(SERVER, ?MODULE).
 
--define(TIMEOUT, 500).
+-define(TIMEOUT, 1000).
 
 -record(state, {socket}).
 
@@ -45,7 +45,10 @@ consume(Pid) ->
     gen_server:call(Pid, consume).
 
 walk(Pid) ->
-    gen_server:call(Pid, walk).
+    gen_server:call(Pid, {walk, fun (X) -> X end}).
+
+walk(Pid, Fn) ->
+    gen_server:call(Pid, {walk, Fn}).
 
 close(Pid) ->
     gen_server:cast(Pid, close).
@@ -105,21 +108,34 @@ handle_call(consume, _From, State = #state{socket = Socket}) ->
     end;
 
 
-handle_call(walk, _From, State = #state{socket = Socket}) ->
+handle_call({walk, Fn}, _From, State = #state{socket = Socket}) ->
     Ref = make_ref(),
+
     Now1 = now(),
-    case gen_tcp:send(Socket, term_to_binary({walk, Ref})) of
+    case gen_tcp:send(Socket, term_to_binary({walk, Ref, Fn})) of
         ok ->
             Now2 = now(),
+            RefBin = term_to_binary({ok, Ref}),
             case gen_tcp:recv(Socket, 0, ?TIMEOUT) of
-                {ok, Bin} ->
-                    {reply, binary_to_term(Bin), State};
+                {ok, RefBin0} when RefBin0 =:= RefBin ->
+                    Now3 = now(),
+                    case gen_tcp:recv(Socket, 0, ?TIMEOUT) of
+                        {ok, Bin} when  RefBin == Bin->
+                            {reply, binary_to_term(Bin), State};
+                        {error, timeout} = E ->
+                            lager:warning("Timeout in rcv: ~p + ~p", [timer:now_diff(now(), Now3)]),
+                            {reply, {error, rcv, Ref, E}, State};
+                        E ->
+                            {reply, {error, rcv, Ref, E}, State}
+                    end;
                 {error, timeout} = E ->
-                    lager:warning("Timeout in rcv: ~p", [timer:now_diff(now(), Now2)]),
+                    lager:warning("Timeout in ok- rcv ok: ~p", [timer:now_diff(now(), Now2)]),
                     {reply, {error, rcv, Ref, E}, State};
                 E ->
                     {reply, {error, rcv, Ref, E}, State}
             end;
+
+
         {error, timeout} = E ->
             lager:warning("Timeout in send: ~p", [timer:now_diff(now(), Now1)]),
             {reply, {error, send, Ref, E}, State};
