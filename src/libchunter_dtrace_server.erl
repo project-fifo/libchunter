@@ -119,7 +119,7 @@ handle_call({walk, Fn}, _From, State = #state{socket = Socket}) ->
                 {ok, RefBin0} when RefBin0 =:= RefBin ->
                     Now3 = now(),
                     case gen_tcp:recv(Socket, 0, ?TIMEOUT) of
-                        {ok, Bin} when  RefBin == Bin->
+                        {ok, Bin} ->
                             {reply, binary_to_term(Bin), State};
                         {error, timeout} = E ->
                             lager:warning("Timeout in rcv: ~p + ~p", [timer:now_diff(now(), Now3)]),
