@@ -20,6 +20,8 @@
 
 -define(SERVER, ?MODULE).
 
+-define(TIMEOUT, 500).
+
 -record(state, {socket}).
 
 %%%===================================================================
@@ -90,7 +92,7 @@ init([Server, Port, Script]) ->
 %%--------------------------------------------------------------------
 handle_call(consume, _From, State = #state{socket = Socket}) ->
     gen_tcp:send(Socket, term_to_binary(consume)),
-    case gen_tcp:recv(Socket, 0, 100) of
+    case gen_tcp:recv(Socket, 0, ?TIMEOUT) of
         {ok, Bin} ->
             {reply, binary_to_term(Bin), State};
         E ->
@@ -99,7 +101,7 @@ handle_call(consume, _From, State = #state{socket = Socket}) ->
 
 handle_call(walk, _From, State = #state{socket = Socket}) ->
     gen_tcp:send(Socket, term_to_binary(walk)),
-    case gen_tcp:recv(Socket, 0, 100) of
+    case gen_tcp:recv(Socket, 0, ?TIMEOUT) of
         {ok, Bin} ->
             {reply, binary_to_term(Bin), State};
         E ->
