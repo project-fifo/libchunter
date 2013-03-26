@@ -15,7 +15,9 @@
          start_machine/3,
          start_machine/4,
          stop_machine/3,
+         stop_machine/4,
          reboot_machine/3,
+         reboot_machine/4,
          update_machine/5,
          console_open/3,
          console_open/4,
@@ -153,6 +155,17 @@ start_machine(Server, Port, UUID, Image) ->
                    UUID::fifo:uuid()) -> ok.
 
 stop_machine(Server, Port, UUID) ->
+    stop_machine(Server, Port, UUID, []).
+
+-spec stop_machine(Server::inet:ip_address() | inet:hostname(),
+                   Port::inet:port_number(),
+                   UUID::fifo:uuid(),
+                   Options::[atom()|{atom(), term()}]) -> ok.
+
+stop_machine(Server, Port, UUID, [force]) ->
+    chunter_cast(Server, Port, {machines, stop, force, UUID});
+
+stop_machine(Server, Port, UUID, []) ->
     chunter_cast(Server, Port, {machines, stop, UUID}).
 
 -spec reboot_machine(Server::inet:ip_address() | inet:hostname(),
@@ -160,6 +173,18 @@ stop_machine(Server, Port, UUID) ->
                      UUID::fifo:uuid()) -> ok.
 
 reboot_machine(Server, Port, UUID) ->
+    reboot_machine(Server, Port, UUID, []).
+
+
+-spec reboot_machine(Server::inet:ip_address() | inet:hostname(),
+                     Port::inet:port_number(),
+                     UUID::fifo:uuid(),
+                     Options::[atom()|{atom(), term()}]) -> ok.
+
+reboot_machine(Server, Port, UUID, [force]) ->
+    chunter_cast(Server, Port, {machines, reboot, force, UUID});
+
+reboot_machine(Server, Port, UUID, []) ->
     chunter_cast(Server, Port, {machines, reboot, UUID}).
 
 
