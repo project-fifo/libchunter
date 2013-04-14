@@ -21,11 +21,11 @@
          update_machine/5,
          console_open/3,
          console_open/4,
+         console_send/2,
          snapshot/4,
          delete_snapshot/4,
          rollback_snapshot/4,
          start/0,
-         send_open/2,
          ping/2
         ]).
 
@@ -43,123 +43,174 @@ start() ->
 ping(Server, Port) ->
     libchunter_server:call(Server, Port, ping).
 
+%%%===================================================================
+%%% Console commands
+%%%===================================================================
+
+%%--------------------------------------------------------------------
+%% @doc Opens a new console connection. A process is spawned all
+%%    output from the repote console is send to the current process in
+%%    the form {data, BinData}.
+%% @end
+%%--------------------------------------------------------------------
+
+-spec console_open(Server::inet:ip_address() | inet:hostname(),
+                   Port::inet:port_number(), VM::fifo:vm_id()) ->
+                          {error, timeout} |
+                          {ok, pid()}.
 console_open(Server, Port, VM) ->
     console_open(Server, Port, VM, self()).
 
+%%--------------------------------------------------------------------
+%% @doc Same as console_open/3 but allows specifying the process that
+%%    gets the output data.
+%% @end
+%%--------------------------------------------------------------------
+-spec console_open(Server::inet:ip_address() | inet:hostname(),
+                   Port::inet:port_number(), VM::fifo:vm_id(),
+                   Proc::pid()) ->
+                          {error, timeout} |
+                          {ok, pid()}.
 console_open(Server, Port, VM, Proc) ->
     libchunter_server:console(Server, Port, VM, Proc).
 
-send_open(Console, Data) ->
-    libchunter_server:send(Console, Data).
 
+%%--------------------------------------------------------------------
+%% @doc Send data to a remote console.
+%% @end
+%%--------------------------------------------------------------------
+-spec console_send(Console::pid(), Data::binary()) ->
+                          ok.
+console_send(Console, Data) ->
+    libchunter_console_server:send(Console, Data).
+
+%%--------------------------------------------------------------------
+%% @doc Creates a new snapshot with the given ID.
+%% @end
+%%--------------------------------------------------------------------
+-spec snapshot(Server::inet:ip_address() | inet:hostname(),
+               Port::inet:port_number(),
+               UUID::fifo:vm_id(),
+               SnapID::fifo:uuid()) ->
+                      {error, timeout} |
+                      ok.
 snapshot(Server, Port, UUID, SnapID) ->
     libchunter_server:call(Server, Port, {machines, snapshot, UUID, SnapID}).
 
+%%--------------------------------------------------------------------
+%% @doc Deletes the snapshot of the given ID.
+%% @end
+%%--------------------------------------------------------------------
+-spec delete_snapshot(Server::inet:ip_address() | inet:hostname(),
+                      Port::inet:port_number(),
+                      UUID::fifo:vm_id(),
+                      SnapID::fifo:uuid()) ->
+                             {error, timeout} |
+                             ok.
 delete_snapshot(Server, Port, UUID, SnapID) ->
     libchunter_server:call(Server, Port, {machines, snapshot, delete, UUID, SnapID}).
 
+%%--------------------------------------------------------------------
+%% @doc Rolls back the snapshot with the given ID, beware that all
+%%   snapshots between the current state and the rollded back
+%%   snapshot will be deleted!
+%% @end
+%%--------------------------------------------------------------------
+-spec rollback_snapshot(Server::inet:ip_address() | inet:hostname(),
+                        Port::inet:port_number(),
+                        UUID::fifo:vm_id(),
+                        SnapID::fifo:uuid()) ->
+                               {error, timeout} |
+                               ok.
 rollback_snapshot(Server, Port, UUID, SnapID) ->
     libchunter_server:call(Server, Port, {machines, snapshot, rollback, UUID, SnapID}).
 
 %%--------------------------------------------------------------------
-%% @spec (pid(), auth(), machine()) -> ok
-%%
 %% @doc Starts a machine.
 %%
 %% This command is asyncronous.
 %% @end
 %%--------------------------------------------------------------------
-
 -spec start_machine(Server::inet:ip_address() | inet:hostname(),
                     Port::inet:port_number(),
-                    UUID::fifo:uuid()) -> ok.
+                    UUID::fifo:vm_id()) -> ok.
 
 start_machine(Server, Port, UUID) ->
     chunter_cast(Server, Port, {machines, start, UUID}).
 
 %%--------------------------------------------------------------------
-%% @spec (pid(), auth(), machine()) -> ok
-%%
 %% @doc Deletes a machine.
 %%
 %% This command is asyncronous.
 %% @end
 %%--------------------------------------------------------------------
-
 -spec delete_machine(Server::inet:ip_address() | inet:hostname(),
                      Port::inet:port_number(),
-                     UUID::fifo:uuid()) -> ok.
-
+                     UUID::fifo:vm_id()) -> ok.
 delete_machine(Server, Port, UUID) ->
     chunter_cast(Server, Port, {machines, delete, UUID}).
 
 %%--------------------------------------------------------------------
-%% @spec (pid(), auth(),
-%%        binary(), binary(), binary(),
-%%        [{binary(),binary()}], [{binary(),binary()}]) -> machine()
-%%
 %% @doc Creates a new machine.
 %%
+%% This command is asyncronous.
 %% @end
 %%--------------------------------------------------------------------
-
 -spec create_machine(Server::inet:ip_address() | inet:hostname(),
                      Port::inet:port_number(),
-                     UUID::fifo:uuid(),
+                     UUID::fifo:vm_id(),
                      PSpec::fifo:package(),
                      DSpec::fifo:dataset(),
-                     Config::fifo:package()) -> ok.
-
+                     Config::fifo:config()) -> ok.
 create_machine(Server, Port, UUID, PSpec, DSpec, Config) ->
     chunter_cast(Server, Port, {machines, create, UUID, PSpec, DSpec, Config}).
 
 %%--------------------------------------------------------------------
-%% @spec (pid(), auth(),
-%%        binary(), binary(), binary(),
-%%        [{binary(),binary()}], [{binary(),binary()}]) -> machine()
+%% @doc Updates a mchine.
 %%
-%% @doc Updates a mchine
-%%
+%% This command is asyncronous.
 %% @end
 %%--------------------------------------------------------------------
-
 -spec update_machine(Server::inet:ip_address() | inet:hostname(),
                      Port::inet:port_number(),
-                     UUID::fifo:uuid(),
+                     UUID::fifo:vm_id(),
                      Package::fifo:package(),
-                     Config::fifo:package()) -> ok.
-
+                     Config::fifo:config()) -> ok.
 update_machine(Server, Port, UUID, Package, Config) ->
     chunter_cast(Server, Port, {machines, update, UUID, Package, Config}).
 
-
-
 %%--------------------------------------------------------------------
-%% @spec (pid(), auth(),
-%%        machine(), binary()) -> ok.
-%%
 %% @doc Starts a KVM virtual machine from a iso image.
 %%
 %% @end
 %%--------------------------------------------------------------------
 -spec start_machine(Server::inet:ip_address() | inet:hostname(),
                     Port::inet:port_number(),
-                    UUID::fifo:uuid(),
+                    UUID::fifo:vm_id(),
                     Imge::binary()) -> ok.
-
 start_machine(Server, Port, UUID, Image) ->
     chunter_cast(Server, Port, {machines, start, UUID, Image}).
 
+%%--------------------------------------------------------------------
+%% @doc Stops a virtual machine.
+%%
+%% @end
+%%--------------------------------------------------------------------
 -spec stop_machine(Server::inet:ip_address() | inet:hostname(),
                    Port::inet:port_number(),
-                   UUID::fifo:uuid()) -> ok.
+                   UUID::fifo:vm_id()) -> ok.
 
 stop_machine(Server, Port, UUID) ->
     stop_machine(Server, Port, UUID, []).
 
+%%--------------------------------------------------------------------
+%% @doc Stops a virtual machine allowing optional options like force.
+%%
+%% @end
+%%--------------------------------------------------------------------
 -spec stop_machine(Server::inet:ip_address() | inet:hostname(),
                    Port::inet:port_number(),
-                   UUID::fifo:uuid(),
+                   UUID::fifo:vm_id(),
                    Options::[atom()|{atom(), term()}]) -> ok.
 
 stop_machine(Server, Port, UUID, [force]) ->
@@ -168,17 +219,28 @@ stop_machine(Server, Port, UUID, [force]) ->
 stop_machine(Server, Port, UUID, []) ->
     chunter_cast(Server, Port, {machines, stop, UUID}).
 
+%%--------------------------------------------------------------------
+%% @doc Reboots a virtual machine.
+%%
+%% @end
+%%--------------------------------------------------------------------
 -spec reboot_machine(Server::inet:ip_address() | inet:hostname(),
                      Port::inet:port_number(),
-                     UUID::fifo:uuid()) -> ok.
+                     UUID::fifo:vm_id()) -> ok.
 
 reboot_machine(Server, Port, UUID) ->
     reboot_machine(Server, Port, UUID, []).
 
 
+%%--------------------------------------------------------------------
+%% @doc Reboots a virtual machine allowing optional options like
+%%   force.
+%%
+%% @end
+%%--------------------------------------------------------------------
 -spec reboot_machine(Server::inet:ip_address() | inet:hostname(),
                      Port::inet:port_number(),
-                     UUID::fifo:uuid(),
+                     UUID::fifo:vm_id(),
                      Options::[atom()|{atom(), term()}]) -> ok.
 
 reboot_machine(Server, Port, UUID, [force]) ->
@@ -191,20 +253,6 @@ reboot_machine(Server, Port, UUID, []) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-
-                                                %chunter_call(Server, Port,{Auth, _}, Call) ->
-                                                %    chunter_call(Server, Port, Call);
-
-                                                %chunter_call(Server, Port, Call) ->
-                                                %    try
-                                                %   gen_server:call(Server, Port,{call, Auth, Call})
-                                                %    catch
-                                                %   T:E ->
-                                                %       lager:error([{fifi_component, libchunter}, {user, Auth}],
-                                                %           "libchunter:call - Error ~p:~p, Call: ~p.",
-                                                %           [T, E, Call]),
-                                                %       {error, cant_call}
-                                                %    end.
 
 -spec chunter_cast(Server::inet:ip_address() | inet:hostname(),
                    Port::inet:port_number(),
