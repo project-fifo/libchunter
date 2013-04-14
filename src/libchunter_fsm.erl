@@ -102,7 +102,12 @@ rcving(_Event, #state{socket=Socket, from=undefined} = State) ->
 rcving(_Event, #state{socket=Socket, from=From} = State) ->
     case gen_tcp:recv(Socket, 0) of
         {ok, Res} ->
-            gen_server:reply(From, binary_to_term(Res)),
+            case binary_to_term(Res) of
+                {reply, R} ->
+                    gen_server:reply(From, R);
+                R ->
+                    gen_server:reply(From, R)
+            end,
             {next_state, closing, State, 0};
         _ ->
             gen_server:reply(From, {error, connection_failed}),
