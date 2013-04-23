@@ -25,6 +25,7 @@
          snapshot/4,
          delete_snapshot/4,
          rollback_snapshot/4,
+         store_snapshot/5,
          start/0,
          ping/2
         ]).
@@ -124,6 +125,21 @@ delete_snapshot(Server, Port, UUID, SnapID) ->
                                ok.
 rollback_snapshot(Server, Port, UUID, SnapID) ->
     libchunter_server:call(Server, Port, {machines, snapshot, rollback, UUID, SnapID}).
+
+
+%%--------------------------------------------------------------------
+%% @doc Creates a new snapshot with the given ID.
+%% @end
+%%--------------------------------------------------------------------
+-spec store_snapshot(Server::inet:ip_address() | inet:hostname(),
+                     Port::inet:port_number(),
+                     UUID::fifo:vm_id(),
+                     SnapID::fifo:uuid(),
+                     Img::fifo:uuid()) ->
+                      {error, timeout} |
+                      ok.
+store_snapshot(Server, Port, UUID, SnapID, Img) ->
+    libchunter_server:call(Server, Port, {machines, snapshot, store, UUID, SnapID, Img}).
 
 %%--------------------------------------------------------------------
 %% @doc Starts a machine.
