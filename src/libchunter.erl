@@ -136,8 +136,8 @@ rollback_snapshot(Server, Port, UUID, SnapID) ->
                      UUID::fifo:vm_id(),
                      SnapID::fifo:uuid(),
                      Img::fifo:uuid()) ->
-                      {error, timeout} |
-                      ok.
+                            {error, timeout} |
+                            ok.
 store_snapshot(Server, Port, UUID, SnapID, Img) ->
     libchunter_server:call(Server, Port, {machines, snapshot, store, UUID, SnapID, Img}).
 

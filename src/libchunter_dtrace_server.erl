@@ -122,13 +122,15 @@ handle_call({walk, Fn}, _From, State = #state{socket = Socket}) ->
                         {ok, Bin} ->
                             {reply, binary_to_term(Bin), State};
                         {error, timeout} = E ->
-                            lager:warning("Timeout in rcv: ~p + ~p", [timer:now_diff(now(), Now3)]),
+                            lager:warning("Timeout in rcv: ~p + ~p",
+                                          [timer:now_diff(now(), Now3)]),
                             {reply, {error, rcv0, Ref, E}, State};
                         E ->
                             {reply, {error, rcv0, Ref, E}, State}
                     end;
                 {error, timeout} = E ->
-                    lager:warning("Timeout in ok- rcv ok: ~p", [timer:now_diff(now(), Now2)]),
+                    lager:warning("Timeout in ok- rcv ok: ~p",
+                                  [timer:now_diff(now(), Now2)]),
                     {reply, {error, rcv1, Ref, E}, State};
                 E ->
                     {reply, {error, rcv1, Ref, E}, State}
