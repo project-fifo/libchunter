@@ -96,7 +96,7 @@ console_send(Console, Data) ->
                       {error, timeout} |
                       ok.
 snapshot(Server, Port, UUID, SnapID) ->
-    libchunter_server:call(Server, Port, {machines, snapshot, UUID, SnapID}).
+    chunter_cast(Server, Port, {machines, snapshot, UUID, SnapID}).
 
 %%--------------------------------------------------------------------
 %% @doc Deletes the snapshot of the given ID.
