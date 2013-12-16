@@ -147,21 +147,21 @@ store_snapshot(Server, Port, UUID, SnapID, Img) ->
 %% @doc Uploads a snapshot to s3.
 %% @end
 %%--------------------------------------------------------------------
-upload_snapshot(Server, Port, UUID, SnapId, Host, Port, Bucket, AKey, SKey, Bucket) ->
+upload_snapshot(Server, Port, UUID, SnapId, S3Server, S3Port, Bucket, AKey, SKey, Bucket) ->
     libchunter_server:call(
       Server, Port,
       {machines, snapshot, upload,
-       UUID, SnapId, Host, Port, Bucket, AKey, SKey, Bucket}).
+       UUID, SnapId, S3Server, S3Port, Bucket, AKey, SKey, Bucket}).
 
 %%--------------------------------------------------------------------
 %% @doc Downlaods a snapshot from s3.
 %% @end
 %%--------------------------------------------------------------------
-download_snapshot(Server, Port, UUID, SnapId, Host, Port, Bucket, AKey, SKey, Bucket) ->
+download_snapshot(Server, Port, UUID, SnapId, S3Server, S3Port, Bucket, AKey, SKey, Bucket) ->
     libchunter_server:call(
       Server, Port,
       {machines, snapshot, download,
-       UUID, SnapId, Host, Port, Bucket, AKey, SKey, Bucket}).
+       UUID, SnapId, S3Server, S3Port, Bucket, AKey, SKey, Bucket}).
 %%--------------------------------------------------------------------
 %% @doc Starts a machine.
 %%
