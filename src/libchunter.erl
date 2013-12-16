@@ -25,6 +25,8 @@
          snapshot/4,
          delete_snapshot/4,
          rollback_snapshot/4,
+         upload_snapshot/10,
+         download_snapshot/10,
          store_snapshot/5,
          start/0,
          ping/2
@@ -141,6 +143,25 @@ rollback_snapshot(Server, Port, UUID, SnapID) ->
 store_snapshot(Server, Port, UUID, SnapID, Img) ->
     libchunter_server:call(Server, Port, {machines, snapshot, store, UUID, SnapID, Img}).
 
+%%--------------------------------------------------------------------
+%% @doc Uploads a snapshot to s3.
+%% @end
+%%--------------------------------------------------------------------
+upload_snapshot(Server, Port, UUID, SnapId, Host, Port, Bucket, AKey, SKey, Bucket) ->
+    libchunter_server:call(
+      Server, Port,
+      {machines, snapshot, upload,
+       UUID, SnapId, Host, Port, Bucket, AKey, SKey, Bucket}).
+
+%%--------------------------------------------------------------------
+%% @doc Downlaods a snapshot from s3.
+%% @end
+%%--------------------------------------------------------------------
+download_snapshot(Server, Port, UUID, SnapId, Host, Port, Bucket, AKey, SKey, Bucket) ->
+    libchunter_server:call(
+      Server, Port,
+      {machines, snapshot, download,
+       UUID, SnapId, Host, Port, Bucket, AKey, SKey, Bucket}).
 %%--------------------------------------------------------------------
 %% @doc Starts a machine.
 %%
