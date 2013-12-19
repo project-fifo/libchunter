@@ -25,7 +25,7 @@
          snapshot/4,
          delete_snapshot/4,
          rollback_snapshot/4,
-         backup/4,
+         backup/5,
          backup/10,
          backup/11,
          restore_backup/10,
@@ -161,16 +161,10 @@ backup(Server, Port, UUID, SnapId, S3Server, S3Port, Bucket, AKey,
              {s3_host, S3Server},
              {s3_port, S3Port},
              {s3_bucket, Bucket} | Opts],
-    Opts2 = case SnapId of
-                undefined ->
-                    Opts1;
-                _ ->
-                    [{snapshot, SnapId} | Opts1]
-            end,
-    backup(Server, Port, UUID, Opts2).
+    backup(Server, Port, UUID, SnapId, Opts1).
 
-backup(Server, Port, UUID, Opts) ->
-    libchunter_server:call(Server, Port, {machines, backup, UUID, Opts}).
+backup(Server, Port, UUID, SnapId, Opts) ->
+    libchunter_server:call(Server, Port, {machines, backup, UUID, SnapId, Opts}).
 
 %%--------------------------------------------------------------------
 %% @doc Downlaods a snapshot from s3.
@@ -187,12 +181,11 @@ restore_backup(Server, Port, UUID, SnapId, S3Server, S3Port, Bucket, AKey,
              {secret_key, SKey},
              {s3_host, S3Server},
              {s3_port, S3Port},
-             {s3_bucket, Bucket},
-             {snapshot, SnapId} | Opts],
-    restore_backup(Server, Port, UUID, Opts1).
+             {s3_bucket, Bucket} | Opts],
+    restore_backup(Server, Port, UUID, SnapId, Opts1).
 
-restore_backup(Server, Port, UUID, Opts) ->
-    libchunter_server:call(Server, Port, {machines, restore_backup, UUID, Opts}).
+restore_backup(Server, Port, UUID, SnapId, Opts) ->
+    libchunter_server:call(Server, Port, {machines, restore_backup, UUID, SnapId, Opts}).
 
 %%--------------------------------------------------------------------
 %% @doc Starts a machine.
