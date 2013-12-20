@@ -28,8 +28,9 @@
          backup/5,
          backup/10,
          backup/11,
+         restore_backup/5,
          restore_backup/10,
-         store_snapshot/5,
+         restore_backup/11,
          start/0,
          ping/2
         ]).
@@ -130,21 +131,6 @@ delete_snapshot(Server, Port, UUID, SnapID) ->
 rollback_snapshot(Server, Port, UUID, SnapID) ->
     libchunter_server:call(Server, Port, {machines, snapshot, rollback, UUID, SnapID}).
 
-
-%%--------------------------------------------------------------------
-%% @doc Creates a new snapshot with the given ID.
-%% @end
-%%--------------------------------------------------------------------
--spec store_snapshot(Server::inet:ip_address() | inet:hostname(),
-                     Port::inet:port_number(),
-                     UUID::fifo:vm_id(),
-                     SnapID::fifo:uuid(),
-                     Img::fifo:uuid()) ->
-                            {error, timeout} |
-                            ok.
-store_snapshot(Server, Port, UUID, SnapID, Img) ->
-    libchunter_server:call(Server, Port, {machines, snapshot, store, UUID, SnapID, Img}).
-
 %%--------------------------------------------------------------------
 %% @doc Uploads a snapshot to s3.
 %% @end
@@ -164,7 +150,7 @@ backup(Server, Port, UUID, SnapId, S3Server, S3Port, Bucket, AKey,
     backup(Server, Port, UUID, SnapId, Opts1).
 
 backup(Server, Port, UUID, SnapId, Opts) ->
-    libchunter_server:call(Server, Port, {machines, backup, UUID, SnapId, Opts}).
+    chunter_cast(Server, Port, {machines, backup, UUID, SnapId, Opts}).
 
 %%--------------------------------------------------------------------
 %% @doc Downlaods a snapshot from s3.
@@ -185,7 +171,7 @@ restore_backup(Server, Port, UUID, SnapId, S3Server, S3Port, Bucket, AKey,
     restore_backup(Server, Port, UUID, SnapId, Opts1).
 
 restore_backup(Server, Port, UUID, SnapId, Opts) ->
-    libchunter_server:call(Server, Port, {machines, restore_backup, UUID, SnapId, Opts}).
+    chunter_cast(Server, Port, {machines, backup, restore, UUID, SnapId, Opts}).
 
 %%--------------------------------------------------------------------
 %% @doc Starts a machine.
