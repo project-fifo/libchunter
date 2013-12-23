@@ -29,8 +29,8 @@
          backup/10,
          backup/11,
          restore_backup/5,
+         restore_backup/9,
          restore_backup/10,
-         restore_backup/11,
          store_snapshot/5,
          start/0,
          ping/2
@@ -173,12 +173,12 @@ backup(Server, Port, UUID, SnapId, Opts) ->
 %% @end
 %%--------------------------------------------------------------------
 restore_backup(Server, Port, UUID, SnapId, S3Server, S3Port, Bucket, AKey,
-               SKey, Bucket) ->
+               SKey) ->
     restore_backup(Server, Port, UUID, SnapId, S3Server, S3Port, Bucket, AKey,
-                   SKey, Bucket, []).
+                   SKey, []).
 
 restore_backup(Server, Port, UUID, SnapId, S3Server, S3Port, Bucket, AKey,
-               SKey, Bucket, Opts) ->
+               SKey, Opts) ->
     Opts1 = [{access_key, AKey},
              {secret_key, SKey},
              {s3_host, S3Server},
