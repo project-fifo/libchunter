@@ -31,6 +31,7 @@
          restore_backup/5,
          restore_backup/9,
          restore_backup/10,
+         delete_backup/4,
          store_snapshot/5,
          start/0,
          ping/2
@@ -188,6 +189,9 @@ restore_backup(Server, Port, UUID, SnapId, S3Server, S3Port, Bucket, AKey,
 
 restore_backup(Server, Port, UUID, SnapId, Opts) ->
     chunter_cast(Server, Port, {machines, backup, restore, UUID, SnapId, Opts}).
+
+delete_backup(Server, Port, UUID, SnapID) ->
+    chunter_cast(Server, Port, {machines, backup, delete, UUID, SnapID}).
 
 %%--------------------------------------------------------------------
 %% @doc Starts a machine.
