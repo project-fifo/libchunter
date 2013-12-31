@@ -34,6 +34,7 @@
          delete_backup/4,
          store_snapshot/5,
          start/0,
+         update/2,
          ping/2
         ]).
 
@@ -50,6 +51,9 @@ start() ->
                                         {'error', 'connection_failed'}.
 ping(Server, Port) ->
     libchunter_server:call(Server, Port, ping).
+
+update(Server, Port) ->
+    chunter_cast(Server, Port, update).
 
 %%%===================================================================
 %%% Console commands
