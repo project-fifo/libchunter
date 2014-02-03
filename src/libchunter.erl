@@ -28,6 +28,9 @@
          backup/5,
          backup/10,
          backup/11,
+         service_enable/4,
+         service_disable/4,
+         service_clear/4,
          restore_backup/5,
          restore_backup/9,
          restore_backup/10,
@@ -97,6 +100,48 @@ console_send(Console, Data) ->
     libchunter_console_server:send(Console, Data).
 
 %%--------------------------------------------------------------------
+%% @doc Enable a service for a zone.
+%% @end
+%%--------------------------------------------------------------------
+-spec service_enable(Server::inet:ip_address() | inet:hostname(),
+                     Port::inet:port_number(),
+                     UUID::fifo:vm_id(),
+                     Service::binary()) ->
+                            {error, timeout} |
+                            ok.
+
+service_enable(Server, Port, UUID, Service) ->
+    chunter_cast(Server, Port, {machines, service, enable, UUID, Service}).
+
+%%--------------------------------------------------------------------
+%% @doc Disables a service for a zone.
+%% @end
+%%--------------------------------------------------------------------
+-spec service_disable(Server::inet:ip_address() | inet:hostname(),
+                      Port::inet:port_number(),
+                      UUID::fifo:vm_id(),
+                      Service::binary()) ->
+                             {error, timeout} |
+                             ok.
+
+service_disable(Server, Port, UUID, Service) ->
+    chunter_cast(Server, Port, {machines, service, disable, UUID, Service}).
+
+%%--------------------------------------------------------------------
+%% @doc Clears a service that is in maintaiance or degraded state
+%% @end
+%%--------------------------------------------------------------------
+-spec service_clear(Server::inet:ip_address() | inet:hostname(),
+                    Port::inet:port_number(),
+                    UUID::fifo:vm_id(),
+                    Service::binary()) ->
+                           {error, timeout} |
+                           ok.
+
+service_clear(Server, Port, UUID, Service) ->
+    chunter_cast(Server, Port, {machines, service, clear, UUID, Service}).
+
+%%--------------------------------------------------------------------
 %% @doc Creates a new snapshot with the given ID.
 %% @end
 %%--------------------------------------------------------------------
@@ -157,12 +202,12 @@ store_snapshot(Server, Port, UUID, SnapID, Img) ->
 %% @end
 %%--------------------------------------------------------------------
 backup(Server, Port, UUID, SnapId, S3Server, S3Port, Bucket, AKey,
-                SKey, Bucket) ->
+       SKey, Bucket) ->
     backup(Server, Port, UUID, SnapId, S3Server, S3Port, Bucket, AKey,
-                    SKey, Bucket, []).
+           SKey, Bucket, []).
 
 backup(Server, Port, UUID, SnapId, S3Server, S3Port, Bucket, AKey,
-                SKey, Bucket, Opts) ->
+       SKey, Bucket, Opts) ->
     Opts1 = [{access_key, AKey},
              {secret_key, SKey},
              {s3_host, S3Server},
