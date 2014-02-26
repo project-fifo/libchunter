@@ -12,6 +12,7 @@
 -export([
          delete_machine/3,
          create_machine/6,
+         lock/3,
          start_machine/3,
          start_machine/4,
          stop_machine/3,
@@ -53,7 +54,7 @@ start() ->
            Port::inet:port_number()) -> pong |
                                         {'error', 'connection_failed'}.
 ping(Server, Port) ->
-    libchunter_server:call(Server, Port, ping).
+    chunter_call(Server, Port, ping).
 
 update(Server, Port) ->
     chunter_cast(Server, Port, update).
@@ -180,7 +181,7 @@ delete_snapshot(Server, Port, UUID, SnapID) ->
                                {error, timeout} |
                                ok.
 rollback_snapshot(Server, Port, UUID, SnapID) ->
-    libchunter_server:call(Server, Port, {machines, snapshot, rollback, UUID, SnapID}).
+    chunter_call(Server, Port, {machines, snapshot, rollback, UUID, SnapID}).
 
 
 %%--------------------------------------------------------------------
@@ -195,7 +196,7 @@ rollback_snapshot(Server, Port, UUID, SnapID) ->
                             {error, timeout} |
                             ok.
 store_snapshot(Server, Port, UUID, SnapID, Img) ->
-    libchunter_server:call(Server, Port, {machines, snapshot, store, UUID, SnapID, Img}).
+    chunter_call(Server, Port, {machines, snapshot, store, UUID, SnapID, Img}).
 
 %%--------------------------------------------------------------------
 %% @doc Uploads a snapshot to s3.
@@ -267,6 +268,14 @@ start_machine(Server, Port, UUID) ->
 delete_machine(Server, Port, UUID) ->
     chunter_cast(Server, Port, {machines, delete, UUID}).
 
+-spec lock(Server::inet:ip_address() | inet:hostname(),
+           Port::inet:port_number(),
+           UUID::fifo:vm_id()) ->
+                  ok | failed.
+
+lock(Server, Port, UUID) ->
+    chunter_call(Server, Port, {lock, UUID}).
+
 %%--------------------------------------------------------------------
 %% @doc Creates a new machine.
 %%
@@ -280,7 +289,7 @@ delete_machine(Server, Port, UUID) ->
                      DSpec::fifo:dataset(),
                      Config::fifo:config()) -> ok.
 create_machine(Server, Port, UUID, PSpec, DSpec, Config) ->
-    chunter_cast(Server, Port, {machines, create, UUID, PSpec, DSpec, Config}).
+    chunter_call(Server, Port, {machines, create, UUID, PSpec, DSpec, Config}).
 
 %%--------------------------------------------------------------------
 %% @doc Updates a mchine.
@@ -377,3 +386,6 @@ reboot_machine(Server, Port, UUID, []) ->
 
 chunter_cast(Server, Port, Cast) ->
     libchunter_server:cast(Server, Port, Cast).
+
+chunter_call(Server, Port, Call) ->
+    libchunter_server:call(Server, Port, Call).
