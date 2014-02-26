@@ -1,7 +1,7 @@
 {application, libchunter,
  [
   {description, "Chunter interface library."},
-  {vsn, "0.1.23"},
+  {vsn, "0.1.24"},
   {registered, []},
   {applications, [
                   kernel,
