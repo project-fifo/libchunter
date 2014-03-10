@@ -32,6 +32,9 @@
          service_enable/4,
          service_disable/4,
          service_clear/4,
+         service_enable/3,
+         service_disable/3,
+         service_clear/3,
          restore_backup/5,
          restore_backup/9,
          restore_backup/10,
@@ -141,6 +144,45 @@ service_disable(Server, Port, UUID, Service) ->
 
 service_clear(Server, Port, UUID, Service) ->
     chunter_cast(Server, Port, {machines, service, clear, UUID, Service}).
+
+%%--------------------------------------------------------------------
+%% @doc Enable a service for a zone.
+%% @end
+%%--------------------------------------------------------------------
+-spec service_enable(Server::inet:ip_address() | inet:hostname(),
+                     Port::inet:port_number(),
+                     Service::binary()) ->
+                            {error, timeout} |
+                            ok.
+
+service_enable(Server, Port, Service) ->
+    chunter_cast(Server, Port, {service, enable, Service}).
+
+%%--------------------------------------------------------------------
+%% @doc Disables a service for a zone.
+%% @end
+%%--------------------------------------------------------------------
+-spec service_disable(Server::inet:ip_address() | inet:hostname(),
+                      Port::inet:port_number(),
+                      Service::binary()) ->
+                             {error, timeout} |
+                             ok.
+
+service_disable(Server, Port, Service) ->
+    chunter_cast(Server, Port, {service, disable, Service}).
+
+%%--------------------------------------------------------------------
+%% @doc Clears a service that is in maintaiance or degraded state
+%% @end
+%%--------------------------------------------------------------------
+-spec service_clear(Server::inet:ip_address() | inet:hostname(),
+                    Port::inet:port_number(),
+                    Service::binary()) ->
+                           {error, timeout} |
+                           ok.
+
+service_clear(Server, Port, Service) ->
+    chunter_cast(Server, Port, {service, clear, Service}).
 
 %%--------------------------------------------------------------------
 %% @doc Creates a new snapshot with the given ID.
