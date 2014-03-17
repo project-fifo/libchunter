@@ -39,6 +39,7 @@
          restore_backup/9,
          restore_backup/10,
          delete_backup/4,
+         store_snapshot/5,
          start/0,
          update/2,
          ping/2
@@ -223,6 +224,20 @@ delete_snapshot(Server, Port, UUID, SnapID) ->
                                ok.
 rollback_snapshot(Server, Port, UUID, SnapID) ->
     chunter_call(Server, Port, {machines, snapshot, rollback, UUID, SnapID}).
+
+%%--------------------------------------------------------------------
+%% @doc Creates a new snapshot with the given ID.
+%% @end
+%%--------------------------------------------------------------------
+-spec store_snapshot(Server::inet:ip_address() | inet:hostname(),
+                     Port::inet:port_number(),
+                     UUID::fifo:vm_id(),
+                     SnapID::fifo:uuid(),
+                     Img::fifo:uuid()) ->
+                            {error, timeout} |
+                            ok.
+store_snapshot(Server, Port, UUID, SnapID, Img) ->
+    chunter_call(Server, Port, {machines, snapshot, store, UUID, SnapID, Img}).
 
 %%--------------------------------------------------------------------
 %% @doc Uploads a snapshot to s3.
