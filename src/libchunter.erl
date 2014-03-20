@@ -40,6 +40,7 @@
          restore_backup/10,
          delete_backup/4,
          store_snapshot/5,
+         store_snapshot/11,
          start/0,
          update/2,
          ping/2
@@ -58,6 +59,10 @@ start() ->
                                         {'error', 'connection_failed'}.
 ping(Server, Port) ->
     chunter_call(Server, Port, ping).
+
+-spec update(Server::inet:ip_address() | inet:hostname(),
+             Port::inet:port_number()) -> ok |
+                                          {error, timeout}.
 
 update(Server, Port) ->
     chunter_cast(Server, Port, update).
@@ -238,6 +243,31 @@ rollback_snapshot(Server, Port, UUID, SnapID) ->
                             ok.
 store_snapshot(Server, Port, UUID, SnapID, Img) ->
     chunter_call(Server, Port, {machines, snapshot, store, UUID, SnapID, Img}).
+
+%%--------------------------------------------------------------------
+%% @doc Creates a image on a S3 endpoint.
+%% @end
+%%--------------------------------------------------------------------
+
+-spec store_snapshot(Server::inet:ip_address() | inet:hostname(),
+                     Port::inet:port_number(), UUID::fifo:vm_id(),
+                     SnapId::fifo:uuid(), Img::fifo:uuid(),
+                     S3Host::inet:ip_address() | inet:hostname(),
+                     S3Port::inet:port_number(), Bucket::binary(),
+                     AKey::binary(), SKey::binary(),
+                     Opts::[proplists:property()]) ->
+                            {error, timeout} |
+                            ok.
+
+store_snapshot(Server, Port, UUID, SnapId, Img, S3Host, S3Port, Bucket, AKey,
+               SKey, Options) ->
+    chunter_call(
+      Server, Port,
+      {machines, snapshot, store,
+       UUID, SnapId, Img, S3Host, S3Port, Bucket, AKey, SKey, Options}).
+
+
+
 
 %%--------------------------------------------------------------------
 %% @doc Uploads a snapshot to s3.
@@ -427,6 +457,12 @@ reboot_machine(Server, Port, UUID, []) ->
 
 chunter_cast(Server, Port, Cast) ->
     libchunter_server:cast(Server, Port, Cast).
+
+-spec chunter_call(Server::inet:ip_address() | inet:hostname(),
+                   Port::inet:port_number(),
+                   Call::fifo:chunter_message()) -> ok |
+                                                    {ok, term()} |
+                                                    {error, term()}.
 
 chunter_call(Server, Port, Call) ->
     libchunter_server:call(Server, Port, Call).
