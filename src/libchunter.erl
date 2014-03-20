@@ -461,6 +461,7 @@ chunter_cast(Server, Port, Cast) ->
 -spec chunter_call(Server::inet:ip_address() | inet:hostname(),
                    Port::inet:port_number(),
                    Call::fifo:chunter_message()) -> ok |
+                                                    pong |
                                                     {ok, term()} |
                                                     {error, term()}.
 
