@@ -13,6 +13,7 @@
          delete_machine/3,
          create_machine/6,
          lock/3,
+         unlock/3,
          start_machine/3,
          start_machine/4,
          stop_machine/3,
@@ -346,6 +347,14 @@ delete_machine(Server, Port, UUID) ->
 
 lock(Server, Port, UUID) ->
     chunter_call(Server, Port, {lock, UUID}).
+
+-spec unlock(Server::inet:ip_address() | inet:hostname(),
+             Port::inet:port_number(),
+             UUID::fifo:vm_id()) ->
+                  ok | failed.
+
+unlock(Server, Port, UUID) ->
+    chunter_call(Server, Port, {unlock, UUID}).
 
 %%--------------------------------------------------------------------
 %% @doc Creates a new machine.
