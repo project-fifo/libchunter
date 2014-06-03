@@ -59,7 +59,7 @@ start() ->
            Port::inet:port_number()) -> pong |
                                         {'error', 'connection_failed'}.
 ping(Server, Port) ->
-    chunter_call(Server, Port, ping).
+    libchunter_server:call(Server, Port, ping, 500).
 
 -spec update(Server::inet:ip_address() | inet:hostname(),
              Port::inet:port_number()) -> ok |

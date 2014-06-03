@@ -13,6 +13,7 @@
 %% API
 -export([
          call/4,
+         call/5,
          cast/3,
          start_link/4
         ]).
@@ -34,7 +35,7 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {server, port, command, from, socket}).
+-record(state, {server, port, command, from, socket, timeout}).
 
 %%%===================================================================
 %%% API
@@ -55,22 +56,25 @@
 start_link(Server, Port, Command, From) ->
     gen_fsm:start_link(?MODULE, [Server, Port, Command, From], []).
 
+call(Server, Port, Command, From, Timeout) ->
+    supervisor:start_child(libchunter_fsm_sup, [Server, Port, Command, From, Timeout]).
 call(Server, Port, Command, From) ->
-    supervisor:start_child(libchunter_fsm_sup, [Server, Port, Command, From]).
+    supervisor:start_child(libchunter_fsm_sup, [Server, Port, Command, From, 4000]).
 
 cast(Server, Port, Command) ->
-    supervisor:start_child(libchunter_fsm_sup, [Server, Port, Command, undefined]).
+    supervisor:start_child(libchunter_fsm_sup, [Server, Port, Command, undefined, infinity]).
 
 %%%===================================================================
 %%% gen_fsm callbacks
 %%%===================================================================
 
-init([Server, Port, Command, From]) ->
+init([Server, Port, Command, From, Timeout]) ->
     {ok, connecting, #state{
-           server = Server,
-           command = Command,
-           port = Port,
-           from = From}, 0}.
+                        server = Server,
+                        command = Command,
+                        port = Port,
+                        from = From,
+                        timeout = Timeout}, 0}.
 
 connecting(_Event, #state{server=Server,
                           port=Port,
@@ -95,12 +99,12 @@ sending(_Event, #state{socket=Socket,
     end.
 
 
-rcving(_Event, #state{socket=Socket, from=undefined} = State) ->
-    gen_tcp:recv(Socket, 0),
+rcving(_Event, #state{socket=Socket, from=undefined, timeout=Timeout} = State) ->
+    gen_tcp:recv(Socket, 0, Timeout),
     {next_state, closing, State, 0};
 
-rcving(_Event, #state{socket=Socket, from=From} = State) ->
-    case gen_tcp:recv(Socket, 0) of
+rcving(_Event, #state{socket=Socket, from=From, timeout=Timeout} = State) ->
+    case gen_tcp:recv(Socket, 0, Timeout) of
         {ok, Res} ->
             case binary_to_term(Res) of
                 {reply, R} ->

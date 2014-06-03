@@ -11,7 +11,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0, call/3, cast/3]).
+-export([start_link/0, call/3, cast/3, call/4]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -58,6 +58,9 @@ init([]) ->
            Command::fifo:chunter_message()) -> term().
 call(Server, Port, Command) ->
     gen_server:call(?SERVER, {call, Server, Port, Command}).
+
+call(Server, Port, Command, Timeout) ->
+    gen_server:call(?SERVER, {call, Server, Port, Command}, Timeout).
 
 -spec cast(Server::inet:ip_address() | inet:hostname(),
            Port::inet:port_number(),
