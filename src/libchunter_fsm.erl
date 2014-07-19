@@ -15,7 +15,7 @@
          call/4,
          call/5,
          cast/3,
-         start_link/4
+         start_link/5
         ]).
 
 %% gen_fsm callbacks
@@ -53,8 +53,8 @@
 %% @end
 %%--------------------------------------------------------------------
 
-start_link(Server, Port, Command, From) ->
-    gen_fsm:start_link(?MODULE, [Server, Port, Command, From], []).
+start_link(Server, Port, Command, From, Timeout) ->
+    gen_fsm:start_link(?MODULE, [Server, Port, Command, From, Timeout], []).
 
 call(Server, Port, Command, From, Timeout) ->
     supervisor:start_child(libchunter_fsm_sup, [Server, Port, Command, From, Timeout]).
@@ -87,7 +87,7 @@ connecting(_Event, #state{server=Server,
             {next_state, closing, State, 0}
     end.
 
-sending(_Event, #state{socket=Socket,
+sending(_E, #state{socket=Socket,
                        command = Command,
                        from=From} = State) ->
     case gen_tcp:send(Socket, term_to_binary(Command)) of
@@ -99,11 +99,11 @@ sending(_Event, #state{socket=Socket,
     end.
 
 
-rcving(_Event, #state{socket=Socket, from=undefined, timeout=Timeout} = State) ->
+rcving(_E, #state{socket=Socket, from=undefined, timeout=Timeout} = State) ->
     gen_tcp:recv(Socket, 0, Timeout),
     {next_state, closing, State, 0};
 
-rcving(_Event, #state{socket=Socket, from=From, timeout=Timeout} = State) ->
+rcving(_E, #state{socket=Socket, from=From, timeout=Timeout} = State) ->
     case gen_tcp:recv(Socket, 0, Timeout) of
         {ok, Res} ->
             case binary_to_term(Res) of
