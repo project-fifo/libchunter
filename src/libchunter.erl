@@ -380,7 +380,7 @@ create_machine(Server, Port, UUID, PSpec, DSpec, Config) ->
 -spec update_machine(Server::inet:ip_address() | inet:hostname(),
                      Port::inet:port_number(),
                      UUID::fifo:vm_id(),
-                     Package::fifo:package(),
+                     Package::fifo:package() | undefined,
                      Config::fifo:config()) -> ok.
 update_machine(Server, Port, UUID, Package, Config) ->
     chunter_cast(Server, Port, {machines, update, UUID, Package, Config}).
