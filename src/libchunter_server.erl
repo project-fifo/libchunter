@@ -60,7 +60,7 @@ call(Server, Port, Command) ->
     gen_server:call(?SERVER, {call, Server, Port, Command}).
 
 call(Server, Port, Command, Timeout) ->
-    gen_server:call(?SERVER, {call, Server, Port, Command}, Timeout).
+    gen_server:call(?SERVER, {call, Server, Port, Command, Timeout}, Timeout).
 
 -spec cast(Server::inet:ip_address() | inet:hostname(),
            Port::inet:port_number(),
@@ -86,6 +86,10 @@ console(Server, Port, VM, Proc) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
+handle_call({call, Server, Port, Command, Timeout}, Form, State) ->
+    libchunter_fsm:call(Server, Port, Command, Form, Timeout),
+    {noreply, State};
+
 handle_call({call, Server, Port, Command}, Form, State) ->
     libchunter_fsm:call(Server, Port, Command, Form),
     {noreply, State};
