@@ -30,12 +30,19 @@
          backup/5,
          backup/10,
          backup/11,
+
          service_enable/4,
+         service_restart/4,
+         service_refresh/4,
          service_disable/4,
          service_clear/4,
+
          service_enable/3,
+         service_restart/3,
+         service_refresh/3,
          service_disable/3,
          service_clear/3,
+
          restore_backup/5,
          restore_backup/9,
          restore_backup/10,
@@ -124,6 +131,34 @@ service_enable(Server, Port, UUID, Service) ->
     chunter_cast(Server, Port, {machines, service, enable, UUID, Service}).
 
 %%--------------------------------------------------------------------
+%% @doc Restart a service for a zone.
+%% @end
+%%--------------------------------------------------------------------
+-spec service_restart(Server::inet:ip_address() | inet:hostname(),
+                      Port::inet:port_number(),
+                      UUID::fifo:vm_id(),
+                      Service::binary()) ->
+                             {error, timeout} |
+                             ok.
+
+service_restart(Server, Port, UUID, Service) ->
+    chunter_cast(Server, Port, {machines, service, restart, UUID, Service}).
+
+%%--------------------------------------------------------------------
+%% @doc Refreshes a service for a zone.
+%% @end
+%%--------------------------------------------------------------------
+-spec service_refresh(Server::inet:ip_address() | inet:hostname(),
+                      Port::inet:port_number(),
+                      UUID::fifo:vm_id(),
+                      Service::binary()) ->
+                             {error, timeout} |
+                            ok.
+
+service_refresh(Server, Port, UUID, Service) ->
+    chunter_cast(Server, Port, {machines, service, refresh, UUID, Service}).
+
+%%--------------------------------------------------------------------
 %% @doc Disables a service for a zone.
 %% @end
 %%--------------------------------------------------------------------
@@ -163,6 +198,32 @@ service_clear(Server, Port, UUID, Service) ->
 
 service_enable(Server, Port, Service) ->
     chunter_cast(Server, Port, {service, enable, Service}).
+
+%%--------------------------------------------------------------------
+%% @doc Refresh a service for a zone.
+%% @end
+%%--------------------------------------------------------------------
+-spec service_refresh(Server::inet:ip_address() | inet:hostname(),
+                      Port::inet:port_number(),
+                      Service::binary()) ->
+                             {error, timeout} |
+                             ok.
+
+service_refresh(Server, Port, Service) ->
+    chunter_cast(Server, Port, {service, refresh, Service}).
+
+%%--------------------------------------------------------------------
+%% @doc Restarts a service for a zone.
+%% @end
+%%--------------------------------------------------------------------
+-spec service_restart(Server::inet:ip_address() | inet:hostname(),
+                      Port::inet:port_number(),
+                      Service::binary()) ->
+                             {error, timeout} |
+                             ok.
+
+service_restart(Server, Port, Service) ->
+    chunter_cast(Server, Port, {service, restart, Service}).
 
 %%--------------------------------------------------------------------
 %% @doc Disables a service for a zone.
