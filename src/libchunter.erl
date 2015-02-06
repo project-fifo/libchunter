@@ -31,6 +31,8 @@
          backup/10,
          backup/11,
 
+         update_fw/3,
+
          service_enable/4,
          service_restart/4,
          service_refresh/4,
@@ -250,6 +252,18 @@ service_disable(Server, Port, Service) ->
 
 service_clear(Server, Port, Service) ->
     chunter_cast(Server, Port, {service, clear, Service}).
+
+%%--------------------------------------------------------------------
+%% @doc Triggers a firewall update
+%% @end
+%%--------------------------------------------------------------------
+-spec update_fw(Server::inet:ip_address() | inet:hostname(),
+                Port::inet:port_number(),
+                UUID::fifo:vm_id()) ->
+                       {error, timeout} |
+                       ok.
+update_fw(Server, Port, VM) ->
+    chunter_cast(Server, Port, {fw, update, VM}).
 
 %%--------------------------------------------------------------------
 %% @doc Creates a new snapshot with the given ID.
