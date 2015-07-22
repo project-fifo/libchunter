@@ -79,7 +79,7 @@ init([Server, Port, Command, From, Timeout]) ->
 connecting(_Event, #state{server=Server,
                           port=Port,
                           from=From} = State) ->
-    case gen_tcp:connect(Server, Port, [binary, {active, false}, {packet, 4}], 100) of
+    case gen_tcp:connect(Server, Port, [binary, {active, false}, {packet, 4}], 500) of
         {ok, Socket} ->
             {next_state, sending, State#state{socket = Socket}, 0};
         _ ->
@@ -88,8 +88,8 @@ connecting(_Event, #state{server=Server,
     end.
 
 sending(_E, #state{socket=Socket,
-                       command = Command,
-                       from=From} = State) ->
+                   command = Command,
+                   from=From} = State) ->
     case gen_tcp:send(Socket, term_to_binary(Command)) of
         ok ->
             {next_state, rcving, State, 0};
@@ -121,7 +121,7 @@ rcving(_E, #state{socket=Socket, from=From, timeout=Timeout} = State) ->
 closing(_Event, #state{socket=undefined} = State) ->
     {stop, normal, State};
 closing(_Event, #state{socket=Socket} = State) ->
-    gen_tcp:close(Socket),
+    gen_tcp:close(Socket), 
     {stop, normal, State}.
 
 
