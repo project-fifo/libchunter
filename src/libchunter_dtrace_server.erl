@@ -110,35 +110,33 @@ handle_call(consume, _From, State = #state{socket = Socket}) ->
 
 handle_call({walk, Fn}, _From, State = #state{socket = Socket}) ->
     Ref = make_ref(),
-    Now1 = now(),
+    Now1 = erlang:system_time(milli_seconds),
     case gen_tcp:send(Socket, term_to_binary({walk, Ref, Fn})) of
         ok ->
-            Now2 = now(),
+            Now2 = erlang:system_time(milli_seconds),
             RefBin = term_to_binary({ok, Ref}),
             case gen_tcp:recv(Socket, 0, ?TIMEOUT) of
                 {ok, RefBin0} when RefBin0 =:= RefBin ->
-                    Now3 = now(),
+                    Now3 = erlang:system_time(milli_seconds),
                     case gen_tcp:recv(Socket, 0, ?TIMEOUT) of
                         {ok, Bin} ->
                             {reply, binary_to_term(Bin), State};
                         {error, timeout} = E ->
                             lager:warning("Timeout in rcv: ~p + ~p",
-                                          [timer:now_diff(now(), Now3)]),
+                                          [erlang:system_time(milli_seconds) - Now3]),
                             {reply, {error, rcv0, Ref, E}, State};
                         E ->
                             {reply, {error, rcv0, Ref, E}, State}
                     end;
                 {error, timeout} = E ->
                     lager:warning("Timeout in ok- rcv ok: ~p",
-                                  [timer:now_diff(now(), Now2)]),
+                                  [erlang:system_time(milli_seconds) -  Now2]),
                     {reply, {error, rcv1, Ref, E}, State};
                 E ->
                     {reply, {error, rcv1, Ref, E}, State}
             end;
-
-
         {error, timeout} = E ->
-            lager:warning("Timeout in send: ~p", [timer:now_diff(now(), Now1)]),
+            lager:warning("Timeout in send: ~p", [erlang:system_time(milli_seconds) - Now1]),
             {reply, {error, send, Ref, E}, State};
         E ->
             {reply, {error, send, Ref, E}, State}
