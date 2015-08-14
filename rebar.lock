@@ -18,5 +18,5 @@
   1},
  {<<"fifo_spec">>,
   {git,"https://github.com/project-fifo/fifo_spec.git",
-       {ref,"6765ce2dd19d9fc8669f10a4fdcb217ef440e100"}},
+       {ref,"270d558cebe49b6991c04a182752ec988585379c"}},
   0}].
