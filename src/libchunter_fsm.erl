@@ -83,7 +83,12 @@ connecting(_Event, #state{server=Server,
         {ok, Socket} ->
             {next_state, sending, State#state{socket = Socket}, 0};
         _ ->
-            gen_server:reply(From, {error, connection_failed}),
+            case From of
+                Pid when is_pid(Pid) ->
+                    gen_server:reply(From, {error, connection_failed});
+                _ ->
+                    ok
+            end,
             {next_state, closing, State, 0}
     end.
 
