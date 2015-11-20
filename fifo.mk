@@ -1,6 +1,4 @@
 REBAR = $(shell pwd)/rebar3
-ELVIS = $(shell pwd)/elvis
-
 
 compile: $(REBAR) .git/hooks/pre-commit
 	$(REBAR) compile
@@ -19,11 +17,8 @@ xref: $(REBAR)
 test: $(REBAR)
 	$(REBAR) eunit
 
-lint: $(ELVIS)
-	$(ELVIS) rock
-
-$(ELVIS):
-	cp `which elvis` $(ELVIS)
+lint: $(REBAR)
+	$(REBAR) as lint lint
 
 $(REBAR):
 	cp `which rebar3` $(REBAR)
