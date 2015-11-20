@@ -60,7 +60,10 @@ call(Server, Port, Command) ->
     gen_server:call(?SERVER, {call, Server, Port, Command}).
 
 call(Server, Port, Command, Timeout) ->
-    gen_server:call(?SERVER, {call, Server, Port, Command, Timeout}, Timeout).
+    gen_server:call(?SERVER, {call, Server, Port, Command, Timeout},
+                    %% We add 1000 to make sure the call returns w/o
+                    %% a gen_server timeout
+                    Timeout + 1000).
 
 -spec cast(Server::inet:ip_address() | inet:hostname(),
            Port::inet:port_number(),
