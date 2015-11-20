@@ -70,10 +70,10 @@ close(Pid) ->
 %% @end
 %%--------------------------------------------------------------------
 init([Server, Port, Script]) ->
-    case gen_tcp:connect(Server, Port, [binary, {active, false}, {packet, 4}], 100) of
+    case gen_tcp:connect(Server, Port,
+                         [binary, {active, false}, {packet, 4}], 100) of
         {ok, Socket} ->
-            R = gen_tcp:send(Socket, term_to_binary({dtrace, Script})),
-            io:format("open: ~p~n", [R]),
+            ok = gen_tcp:send(Socket, term_to_binary({dtrace, Script})),
             {ok, #state{socket = Socket}};
         _ ->
             {stop, connection_failed}
@@ -117,37 +117,39 @@ handle_call({walk, Fn}, _From, State = #state{socket = Socket}) ->
             RefBin = term_to_binary({ok, Ref}),
             case gen_tcp:recv(Socket, 0, ?TIMEOUT) of
                 {ok, RefBin0} when RefBin0 =:= RefBin ->
-                    Now3 = erlang:system_time(milli_seconds),
-                    case gen_tcp:recv(Socket, 0, ?TIMEOUT) of
-                        {ok, Bin} ->
-                            {reply, binary_to_term(Bin), State};
-                        {error, timeout} = E ->
-                            lager:warning("Timeout in rcv: ~p + ~p",
-                                          [erlang:system_time(milli_seconds) - Now3]),
-                            {reply, {error, rcv0, Ref, E}, State};
-                        E ->
-                            {reply, {error, rcv0, Ref, E}, State}
-                    end;
+                    read_walk(Ref, State);
                 {error, timeout} = E ->
-                    lager:warning("Timeout in ok- rcv ok: ~p",
+                    lager:warning("Timeout in rcv ok: ~p",
                                   [erlang:system_time(milli_seconds) -  Now2]),
                     {reply, {error, rcv1, Ref, E}, State};
                 E ->
                     {reply, {error, rcv1, Ref, E}, State}
             end;
         {error, timeout} = E ->
-            lager:warning("Timeout in send: ~p", [erlang:system_time(milli_seconds) - Now1]),
+            lager:warning("Timeout in send: ~p",
+                          [erlang:system_time(milli_seconds) - Now1]),
             {reply, {error, send, Ref, E}, State};
         E ->
             {reply, {error, send, Ref, E}, State}
     end;
 
 
-
-
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.
+
+read_walk(Ref, State = #state{socket = Socket}) ->
+    Now = erlang:system_time(milli_seconds),
+    case gen_tcp:recv(Socket, 0, ?TIMEOUT) of
+        {ok, Bin} ->
+            {reply, binary_to_term(Bin), State};
+        {error, timeout} = E ->
+            lager:warning("Timeout in rcv: ~p",
+                          [erlang:system_time(milli_seconds) - Now]),
+            {reply, {error, rcv0, Ref, E}, State};
+        E ->
+            {reply, {error, rcv0, Ref, E}, State}
+    end.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -180,8 +182,7 @@ handle_cast(_Msg, State) ->
 handle_info({tcp_closed, _Socket}, State) ->
     {stop, closed, State};
 
-handle_info(Info, State) ->
-    io:format("info: ~p.~n", [Info]),
+handle_info(_Info, State) ->
     {noreply, State}.
 
 %%--------------------------------------------------------------------

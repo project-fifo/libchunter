@@ -61,7 +61,8 @@ close(Console) ->
 %% @end
 %%--------------------------------------------------------------------
 init([Server, Port, VM, Proc]) ->
-    case gen_tcp:connect(Server, Port, [binary, {active, true}, {packet, 4}], 100) of
+    case gen_tcp:connect(Server, Port, [binary, {active, true}, {packet, 4}],
+                         100) of
         {ok, Socket} ->
             ok = gen_tcp:send(Socket, term_to_binary({console, VM})),
             {ok, #state{socket = Socket, proc = Proc}};

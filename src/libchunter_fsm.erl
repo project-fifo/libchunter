@@ -54,15 +54,20 @@
 %%--------------------------------------------------------------------
 
 start_link(Server, Port, Command, From, Timeout) ->
-    gen_fsm:start_link(?MODULE, [Server, Port, Command, From, Timeout], []).
+    gen_fsm:start_link(?MODULE,
+                       [Server, Port, Command, From, Timeout], []).
 
 call(Server, Port, Command, From, Timeout) ->
-    supervisor:start_child(libchunter_fsm_sup, [Server, Port, Command, From, Timeout]).
+    supervisor:start_child(libchunter_fsm_sup,
+                           [Server, Port, Command, From, Timeout]).
+
 call(Server, Port, Command, From) ->
-    supervisor:start_child(libchunter_fsm_sup, [Server, Port, Command, From, 4000]).
+    supervisor:start_child(libchunter_fsm_sup,
+                           [Server, Port, Command, From, 4000]).
 
 cast(Server, Port, Command) ->
-    supervisor:start_child(libchunter_fsm_sup, [Server, Port, Command, undefined, infinity]).
+    supervisor:start_child(libchunter_fsm_sup,
+                           [Server, Port, Command, undefined, infinity]).
 
 %%%===================================================================
 %%% gen_fsm callbacks
@@ -79,15 +84,16 @@ init([Server, Port, Command, From, Timeout]) ->
 connecting(_Event, #state{server=Server,
                           port=Port,
                           from=From} = State) ->
-    case gen_tcp:connect(Server, Port, [binary, {active, false}, {packet, 4}], 500) of
+    case gen_tcp:connect(Server, Port,
+                         [binary, {active, false}, {packet, 4}], 500) of
         {ok, Socket} ->
             {next_state, sending, State#state{socket = Socket}, 0};
         _ ->
             case From of
-                Pid when is_pid(Pid) ->
-                    gen_server:reply(From, {error, connection_failed});
-                _ ->
-                    ok
+                undefined ->
+                    ok;
+                From ->
+                    gen_server:reply(From, {error, connection_failed})
             end,
             {next_state, closing, State, 0}
     end.
@@ -126,7 +132,7 @@ rcving(_E, #state{socket=Socket, from=From, timeout=Timeout} = State) ->
 closing(_Event, #state{socket=undefined} = State) ->
     {stop, normal, State};
 closing(_Event, #state{socket=Socket} = State) ->
-    gen_tcp:close(Socket), 
+    gen_tcp:close(Socket),
     {stop, normal, State}.
 
 

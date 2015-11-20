@@ -342,9 +342,6 @@ store_snapshot(Server, Port, UUID, SnapId, Img, S3Host, S3Port, Bucket, AKey,
       {machines, snapshot, store,
        UUID, SnapId, Img, S3Host, S3Port, Bucket, AKey, SKey, Options}).
 
-
-
-
 %%--------------------------------------------------------------------
 %% @doc Uploads a snapshot to s3.
 %% @end
@@ -356,15 +353,16 @@ backup(Server, Port, UUID, SnapId, S3Server, S3Port, Bucket, AKey,
 
 backup(Server, Port, UUID, SnapId, S3Server, S3Port, Bucket, AKey,
        SKey, Bucket, Opts) ->
-    Opts1 = [{access_key, AKey},
-             {secret_key, SKey},
-             {s3_host, S3Server},
-             {s3_port, S3Port},
-             {s3_bucket, Bucket} | Opts],
+    Opts1 = s3opts(S3Server, S3Port, Bucket, AKey, SKey, Bucket, Opts),
     backup(Server, Port, UUID, SnapId, Opts1).
 
 backup(Server, Port, UUID, SnapId, Opts) ->
     chunter_cast(Server, Port, {machines, backup, UUID, SnapId, Opts}).
+
+s3opts(S3Server, S3Port, Bucket, AKey, SKey, Bucket, Opts) ->
+    [{access_key, AKey}, {secret_key, SKey},
+     {s3_host, S3Server}, {s3_port, S3Port},
+     {s3_bucket, Bucket} | Opts].
 
 %%--------------------------------------------------------------------
 %% @doc Downlaods a snapshot from s3.
@@ -377,11 +375,7 @@ restore_backup(Server, Port, UUID, SnapId, S3Server, S3Port, Bucket, AKey,
 
 restore_backup(Server, Port, UUID, SnapId, S3Server, S3Port, Bucket, AKey,
                SKey, Opts) ->
-    Opts1 = [{access_key, AKey},
-             {secret_key, SKey},
-             {s3_host, S3Server},
-             {s3_port, S3Port},
-             {s3_bucket, Bucket} | Opts],
+    Opts1 = s3opts(S3Server, S3Port, Bucket, AKey, SKey, Bucket, Opts),
     restore_backup(Server, Port, UUID, SnapId, Opts1).
 
 restore_backup(Server, Port, UUID, SnapId, Opts) ->
