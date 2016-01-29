@@ -24,6 +24,7 @@
          console_open/3,
          console_open/4,
          console_send/2,
+         execute/6,
          snapshot/4,
          delete_snapshot/4,
          rollback_snapshot/4,
@@ -80,6 +81,31 @@ update(Server, Port) ->
 %%%===================================================================
 %%% Console commands
 %%%===================================================================
+
+
+execute(Server, Port, VM, Cmd, Acc0, FoldFn) ->
+    {ok, Socket} = gen_tcp:connect(Server, Port, [binary, {active, false},
+                                                  {packet, 4}], 500),
+    ok = gen_tcp:send(Socket, term_to_binary({execute, VM, Cmd})),
+    wait_for_data(Socket, Acc0, FoldFn).
+
+wait_for_data(Socket, Acc, Callback) ->
+    case gen_tcp:recv(Socket, 0) of
+        {ok, Bin} ->
+            case binary_to_term(Bin) of
+                done ->
+                    R = Callback(Acc, done),
+                    gen_tcp:close(Socket),
+                    R;
+                Other ->
+                    Acc1 = Callback(Acc, Other),
+                    wait_for_data(Socket, Acc1, Callback)
+            end;
+        E ->
+            R = Callback(Acc, E),
+            gen_tcp:close(Socket),
+            R
+    end.
 
 %%--------------------------------------------------------------------
 %% @doc Opens a new console connection. A process is spawned all
