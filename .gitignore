@@ -8,3 +8,4 @@ erl_crash.dump
 *.beam
 rel/*.tar.bz2
 gproc_dist_*
+_build/

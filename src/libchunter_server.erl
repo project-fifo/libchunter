@@ -11,7 +11,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0, call/3, cast/3]).
+-export([start_link/0, call/3, cast/3, call/4]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -59,6 +59,12 @@ init([]) ->
 call(Server, Port, Command) ->
     gen_server:call(?SERVER, {call, Server, Port, Command}).
 
+call(Server, Port, Command, Timeout) ->
+    gen_server:call(?SERVER, {call, Server, Port, Command, Timeout},
+                    %% We add 1000 to make sure the call returns w/o
+                    %% a gen_server timeout
+                    Timeout + 1000).
+
 -spec cast(Server::inet:ip_address() | inet:hostname(),
            Port::inet:port_number(),
            Command::fifo:chunter_message()) -> ok.
@@ -83,6 +89,10 @@ console(Server, Port, VM, Proc) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
+handle_call({call, Server, Port, Command, Timeout}, Form, State) ->
+    libchunter_fsm:call(Server, Port, Command, Form, Timeout),
+    {noreply, State};
+
 handle_call({call, Server, Port, Command}, Form, State) ->
     libchunter_fsm:call(Server, Port, Command, Form),
     {noreply, State};

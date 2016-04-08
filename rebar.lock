@@ -1,0 +1,11 @@
+[{<<"fifo_dt">>,{pkg,<<"fifo_dt">>,<<"0.1.66">>},1},
+ {<<"fifo_spec">>,{pkg,<<"fifo_spec">>,<<"0.1.27">>},0},
+ {<<"fifo_utils">>,{pkg,<<"fifo_utils">>,<<"0.1.20">>},2},
+ {<<"goldrush">>,{pkg,<<"goldrush">>,<<"0.1.7">>},1},
+ {<<"jsx">>,{pkg,<<"jsx">>,<<"1.4.5">>},2},
+ {<<"jsxd">>,{pkg,<<"jsxd">>,<<"0.1.10">>},2},
+ {<<"lager">>,{pkg,<<"lager">>,<<"2.1.1">>},0},
+ {<<"libsnarlmatch">>,{pkg,<<"libsnarlmatch">>,<<"0.1.7">>},2},
+ {<<"quickrand">>,{pkg,<<"quickrand">>,<<"1.5.1">>},4},
+ {<<"riak_dt">>,{pkg,<<"riak_dt">>,<<"2.1.1">>},2},
+ {<<"uuid">>,{pkg,<<"uuid_erl">>,<<"1.5.1">>},3}].

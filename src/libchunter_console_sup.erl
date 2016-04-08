@@ -23,4 +23,5 @@ start_link() ->
 %% ===================================================================
 
 init([]) ->
-    {ok, {{simple_one_for_one, 5, 10}, [?CHILD(libchunter_console_server, worker)]}}.
+    {ok, {{simple_one_for_one, 5, 10},
+          [?CHILD(libchunter_console_server, worker)]}}.

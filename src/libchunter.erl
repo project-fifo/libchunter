@@ -12,6 +12,8 @@
 -export([
          delete_machine/3,
          create_machine/6,
+         lock/3,
+         release/3,
          start_machine/3,
          start_machine/4,
          stop_machine/3,
@@ -22,10 +24,36 @@
          console_open/3,
          console_open/4,
          console_send/2,
+         execute/6,
          snapshot/4,
          delete_snapshot/4,
          rollback_snapshot/4,
+         backup/5,
+         backup/10,
+         backup/11,
+
+         update_fw/3,
+
+         service_enable/4,
+         service_restart/4,
+         service_refresh/4,
+         service_disable/4,
+         service_clear/4,
+
+         service_enable/3,
+         service_restart/3,
+         service_refresh/3,
+         service_disable/3,
+         service_clear/3,
+
+         restore_backup/5,
+         restore_backup/9,
+         restore_backup/10,
+         delete_backup/4,
+         store_snapshot/5,
+         store_snapshot/11,
          start/0,
+         update/2,
          ping/2
         ]).
 
@@ -41,11 +69,43 @@ start() ->
            Port::inet:port_number()) -> pong |
                                         {'error', 'connection_failed'}.
 ping(Server, Port) ->
-    libchunter_server:call(Server, Port, ping).
+    libchunter_server:call(Server, Port, ping, 500).
+
+-spec update(Server::inet:ip_address() | inet:hostname(),
+             Port::inet:port_number()) -> ok |
+                                          {error, timeout}.
+
+update(Server, Port) ->
+    chunter_cast(Server, Port, update).
 
 %%%===================================================================
 %%% Console commands
 %%%===================================================================
+
+
+execute(Server, Port, VM, Cmd, Acc0, FoldFn) ->
+    {ok, Socket} = gen_tcp:connect(Server, Port, [binary, {active, false},
+                                                  {packet, 4}], 500),
+    ok = gen_tcp:send(Socket, term_to_binary({execute, VM, Cmd})),
+    wait_for_data(Socket, Acc0, FoldFn).
+
+wait_for_data(Socket, Acc, Callback) ->
+    case gen_tcp:recv(Socket, 0) of
+        {ok, Bin} ->
+            case binary_to_term(Bin) of
+                done ->
+                    R = Callback(Acc, done),
+                    gen_tcp:close(Socket),
+                    R;
+                Other ->
+                    Acc1 = Callback(Acc, Other),
+                    wait_for_data(Socket, Acc1, Callback)
+            end;
+        E ->
+            R = Callback(Acc, E),
+            gen_tcp:close(Socket),
+            R
+    end.
 
 %%--------------------------------------------------------------------
 %% @doc Opens a new console connection. A process is spawned all
@@ -85,6 +145,153 @@ console_send(Console, Data) ->
     libchunter_console_server:send(Console, Data).
 
 %%--------------------------------------------------------------------
+%% @doc Enable a service for a zone.
+%% @end
+%%--------------------------------------------------------------------
+-spec service_enable(Server::inet:ip_address() | inet:hostname(),
+                     Port::inet:port_number(),
+                     UUID::fifo:vm_id(),
+                     Service::binary()) ->
+                            {error, timeout} |
+                            ok.
+
+service_enable(Server, Port, UUID, Service) ->
+    chunter_cast(Server, Port, {machines, service, enable, UUID, Service}).
+
+%%--------------------------------------------------------------------
+%% @doc Restart a service for a zone.
+%% @end
+%%--------------------------------------------------------------------
+-spec service_restart(Server::inet:ip_address() | inet:hostname(),
+                      Port::inet:port_number(),
+                      UUID::fifo:vm_id(),
+                      Service::binary()) ->
+                             {error, timeout} |
+                             ok.
+
+service_restart(Server, Port, UUID, Service) ->
+    chunter_cast(Server, Port, {machines, service, restart, UUID, Service}).
+
+%%--------------------------------------------------------------------
+%% @doc Refreshes a service for a zone.
+%% @end
+%%--------------------------------------------------------------------
+-spec service_refresh(Server::inet:ip_address() | inet:hostname(),
+                      Port::inet:port_number(),
+                      UUID::fifo:vm_id(),
+                      Service::binary()) ->
+                             {error, timeout} |
+                            ok.
+
+service_refresh(Server, Port, UUID, Service) ->
+    chunter_cast(Server, Port, {machines, service, refresh, UUID, Service}).
+
+%%--------------------------------------------------------------------
+%% @doc Disables a service for a zone.
+%% @end
+%%--------------------------------------------------------------------
+-spec service_disable(Server::inet:ip_address() | inet:hostname(),
+                      Port::inet:port_number(),
+                      UUID::fifo:vm_id(),
+                      Service::binary()) ->
+                             {error, timeout} |
+                             ok.
+
+service_disable(Server, Port, UUID, Service) ->
+    chunter_cast(Server, Port, {machines, service, disable, UUID, Service}).
+
+%%--------------------------------------------------------------------
+%% @doc Clears a service that is in maintaiance or degraded state
+%% @end
+%%--------------------------------------------------------------------
+-spec service_clear(Server::inet:ip_address() | inet:hostname(),
+                    Port::inet:port_number(),
+                    UUID::fifo:vm_id(),
+                    Service::binary()) ->
+                           {error, timeout} |
+                           ok.
+
+service_clear(Server, Port, UUID, Service) ->
+    chunter_cast(Server, Port, {machines, service, clear, UUID, Service}).
+
+%%--------------------------------------------------------------------
+%% @doc Enable a service for a zone.
+%% @end
+%%--------------------------------------------------------------------
+-spec service_enable(Server::inet:ip_address() | inet:hostname(),
+                     Port::inet:port_number(),
+                     Service::binary()) ->
+                            {error, timeout} |
+                            ok.
+
+service_enable(Server, Port, Service) ->
+    chunter_cast(Server, Port, {service, enable, Service}).
+
+%%--------------------------------------------------------------------
+%% @doc Refresh a service for a zone.
+%% @end
+%%--------------------------------------------------------------------
+-spec service_refresh(Server::inet:ip_address() | inet:hostname(),
+                      Port::inet:port_number(),
+                      Service::binary()) ->
+                             {error, timeout} |
+                             ok.
+
+service_refresh(Server, Port, Service) ->
+    chunter_cast(Server, Port, {service, refresh, Service}).
+
+%%--------------------------------------------------------------------
+%% @doc Restarts a service for a zone.
+%% @end
+%%--------------------------------------------------------------------
+-spec service_restart(Server::inet:ip_address() | inet:hostname(),
+                      Port::inet:port_number(),
+                      Service::binary()) ->
+                             {error, timeout} |
+                             ok.
+
+service_restart(Server, Port, Service) ->
+    chunter_cast(Server, Port, {service, restart, Service}).
+
+%%--------------------------------------------------------------------
+%% @doc Disables a service for a zone.
+%% @end
+%%--------------------------------------------------------------------
+-spec service_disable(Server::inet:ip_address() | inet:hostname(),
+                      Port::inet:port_number(),
+                      Service::binary()) ->
+                             {error, timeout} |
+                             ok.
+
+service_disable(Server, Port, Service) ->
+    chunter_cast(Server, Port, {service, disable, Service}).
+
+%%--------------------------------------------------------------------
+%% @doc Clears a service that is in maintaiance or degraded state
+%% @end
+%%--------------------------------------------------------------------
+-spec service_clear(Server::inet:ip_address() | inet:hostname(),
+                    Port::inet:port_number(),
+                    Service::binary()) ->
+                           {error, timeout} |
+                           ok.
+
+service_clear(Server, Port, Service) ->
+    chunter_cast(Server, Port, {service, clear, Service}).
+
+%%--------------------------------------------------------------------
+%% @doc Triggers a firewall update
+%% @end
+%%--------------------------------------------------------------------
+-spec update_fw(Server::inet:ip_address() | inet:hostname(),
+                Port::inet:port_number(),
+                UUID::fifo:vm_id()) ->
+                       {error, timeout} |
+                       ok.
+update_fw(Server, Port, VM) ->
+    chunter_cast(Server, Port, {fw, update, VM}).
+
+%%--------------------------------------------------------------------
 %% @doc Creates a new snapshot with the given ID.
 %% @end
 %%--------------------------------------------------------------------
@@ -95,7 +302,7 @@ console_send(Console, Data) ->
                       {error, timeout} |
                       ok.
 snapshot(Server, Port, UUID, SnapID) ->
-    libchunter_server:call(Server, Port, {machines, snapshot, UUID, SnapID}).
+    chunter_cast(Server, Port, {machines, snapshot, UUID, SnapID}).
 
 %%--------------------------------------------------------------------
 %% @doc Deletes the snapshot of the given ID.
@@ -108,7 +315,7 @@ snapshot(Server, Port, UUID, SnapID) ->
                              {error, timeout} |
                              ok.
 delete_snapshot(Server, Port, UUID, SnapID) ->
-    libchunter_server:call(Server, Port, {machines, snapshot, delete, UUID, SnapID}).
+    chunter_cast(Server, Port, {machines, snapshot, delete, UUID, SnapID}).
 
 %%--------------------------------------------------------------------
 %% @doc Rolls back the snapshot with the given ID, beware that all
@@ -123,7 +330,85 @@ delete_snapshot(Server, Port, UUID, SnapID) ->
                                {error, timeout} |
                                ok.
 rollback_snapshot(Server, Port, UUID, SnapID) ->
-    libchunter_server:call(Server, Port, {machines, snapshot, rollback, UUID, SnapID}).
+    chunter_call(Server, Port, {machines, snapshot, rollback, UUID, SnapID}).
+
+%%--------------------------------------------------------------------
+%% @doc Creates a new snapshot with the given ID.
+%% @end
+%%--------------------------------------------------------------------
+-spec store_snapshot(Server::inet:ip_address() | inet:hostname(),
+                     Port::inet:port_number(),
+                     UUID::fifo:vm_id(),
+                     SnapID::fifo:uuid(),
+                     Img::fifo:uuid()) ->
+                            {error, timeout} |
+                            ok.
+store_snapshot(Server, Port, UUID, SnapID, Img) ->
+    chunter_call(Server, Port, {machines, snapshot, store, UUID, SnapID, Img}).
+
+%%--------------------------------------------------------------------
+%% @doc Creates a image on a S3 endpoint.
+%% @end
+%%--------------------------------------------------------------------
+
+-spec store_snapshot(Server::inet:ip_address() | inet:hostname(),
+                     Port::inet:port_number(), UUID::fifo:vm_id(),
+                     SnapId::fifo:uuid(), Img::fifo:uuid(),
+                     S3Host::inet:ip_address() | inet:hostname(),
+                     S3Port::inet:port_number(), Bucket::binary(),
+                     AKey::binary(), SKey::binary(),
+                     Opts::[proplists:property()]) ->
+                            {error, timeout} |
+                            ok.
+
+store_snapshot(Server, Port, UUID, SnapId, Img, S3Host, S3Port, Bucket, AKey,
+               SKey, Options) ->
+    chunter_call(
+      Server, Port,
+      {machines, snapshot, store,
+       UUID, SnapId, Img, S3Host, S3Port, Bucket, AKey, SKey, Options}).
+
+%%--------------------------------------------------------------------
+%% @doc Uploads a snapshot to s3.
+%% @end
+%%--------------------------------------------------------------------
+backup(Server, Port, UUID, SnapId, S3Server, S3Port, Bucket, AKey,
+       SKey, Bucket) ->
+    backup(Server, Port, UUID, SnapId, S3Server, S3Port, Bucket, AKey,
+           SKey, Bucket, []).
+
+backup(Server, Port, UUID, SnapId, S3Server, S3Port, Bucket, AKey,
+       SKey, Bucket, Opts) ->
+    Opts1 = s3opts(S3Server, S3Port, Bucket, AKey, SKey, Bucket, Opts),
+    backup(Server, Port, UUID, SnapId, Opts1).
+
+backup(Server, Port, UUID, SnapId, Opts) ->
+    chunter_cast(Server, Port, {machines, backup, UUID, SnapId, Opts}).
+
+s3opts(S3Server, S3Port, Bucket, AKey, SKey, Bucket, Opts) ->
+    [{access_key, AKey}, {secret_key, SKey},
+     {s3_host, S3Server}, {s3_port, S3Port},
+     {s3_bucket, Bucket} | Opts].
+
+%%--------------------------------------------------------------------
+%% @doc Downlaods a snapshot from s3.
+%% @end
+%%--------------------------------------------------------------------
+restore_backup(Server, Port, UUID, SnapId, S3Server, S3Port, Bucket, AKey,
+               SKey) ->
+    restore_backup(Server, Port, UUID, SnapId, S3Server, S3Port, Bucket, AKey,
+                   SKey, []).
+
+restore_backup(Server, Port, UUID, SnapId, S3Server, S3Port, Bucket, AKey,
+               SKey, Opts) ->
+    Opts1 = s3opts(S3Server, S3Port, Bucket, AKey, SKey, Bucket, Opts),
+    restore_backup(Server, Port, UUID, SnapId, Opts1).
+
+restore_backup(Server, Port, UUID, SnapId, Opts) ->
+    chunter_cast(Server, Port, {machines, backup, restore, UUID, SnapId, Opts}).
+
+delete_backup(Server, Port, UUID, SnapID) ->
+    chunter_cast(Server, Port, {machines, backup, delete, UUID, SnapID}).
 
 %%--------------------------------------------------------------------
 %% @doc Starts a machine.
@@ -150,6 +435,22 @@ start_machine(Server, Port, UUID) ->
 delete_machine(Server, Port, UUID) ->
     chunter_cast(Server, Port, {machines, delete, UUID}).
 
+-spec lock(Server::inet:ip_address() | inet:hostname(),
+           Port::inet:port_number(),
+           UUID::fifo:vm_id()) ->
+                  ok | failed.
+
+lock(Server, Port, UUID) ->
+    chunter_call(Server, Port, {lock, UUID}).
+
+-spec release(Server::inet:ip_address() | inet:hostname(),
+             Port::inet:port_number(),
+             UUID::fifo:vm_id()) ->
+                  ok | failed.
+
+release(Server, Port, UUID) ->
+    chunter_call(Server, Port, {release, UUID}).
+
 %%--------------------------------------------------------------------
 %% @doc Creates a new machine.
 %%
@@ -161,9 +462,9 @@ delete_machine(Server, Port, UUID) ->
                      UUID::fifo:vm_id(),
                      PSpec::fifo:package(),
                      DSpec::fifo:dataset(),
-                     Config::fifo:config()) -> ok.
+                     Config::fifo:config()) -> ok | {error, lock}.
 create_machine(Server, Port, UUID, PSpec, DSpec, Config) ->
-    chunter_cast(Server, Port, {machines, create, UUID, PSpec, DSpec, Config}).
+    chunter_call(Server, Port, {machines, create, UUID, PSpec, DSpec, Config}).
 
 %%--------------------------------------------------------------------
 %% @doc Updates a mchine.
@@ -174,7 +475,7 @@ create_machine(Server, Port, UUID, PSpec, DSpec, Config) ->
 -spec update_machine(Server::inet:ip_address() | inet:hostname(),
                      Port::inet:port_number(),
                      UUID::fifo:vm_id(),
-                     Package::fifo:package(),
+                     Package::fifo:package() | undefined,
                      Config::fifo:config()) -> ok.
 update_machine(Server, Port, UUID, Package, Config) ->
     chunter_cast(Server, Port, {machines, update, UUID, Package, Config}).
@@ -260,3 +561,13 @@ reboot_machine(Server, Port, UUID, []) ->
 
 chunter_cast(Server, Port, Cast) ->
     libchunter_server:cast(Server, Port, Cast).
+
+-spec chunter_call(Server::inet:ip_address() | inet:hostname(),
+                   Port::inet:port_number(),
+                   Call::fifo:chunter_message()) -> ok |
+                                                    pong |
+                                                    {ok, term()} |
+                                                    {error, term()}.
+
+chunter_call(Server, Port, Call) ->
+    libchunter_server:call(Server, Port, Call).

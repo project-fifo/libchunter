@@ -1,13 +1,11 @@
-{application, libchunter,
- [
-  {description, "Chunter interface library."},
-  {vsn, "0.1.8"},
-  {registered, []},
-  {applications, [
-                  kernel,
-                  stdlib,
-                  lager
-                 ]},
-  {mod, { libchunter_app, []}},
-  {env, []}
- ]}.
+{application,libchunter,
+             [{description,"Chunter interface library."},
+              {vsn,"0.1.46"},
+              {registered,[]},
+              {applications,[kernel,stdlib,lager]},
+              {mod,{libchunter_app,[]}},
+              {env,[]},
+              {maintainers,["Heinz N. Gies"]},
+              {licenses,["CDDL"]},
+              {links,[{"Github",
+                       "https://github.com/project-fifo/libchunter"}]}]}.

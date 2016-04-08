@@ -13,8 +13,9 @@
 %% API
 -export([
          call/4,
+         call/5,
          cast/3,
-         start_link/4
+         start_link/5
         ]).
 
 %% gen_fsm callbacks
@@ -34,7 +35,7 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {server, port, command, from, socket}).
+-record(state, {server, port, command, from, socket, timeout}).
 
 %%%===================================================================
 %%% API
@@ -52,40 +53,54 @@
 %% @end
 %%--------------------------------------------------------------------
 
-start_link(Server, Port, Command, From) ->
-    gen_fsm:start_link(?MODULE, [Server, Port, Command, From], []).
+start_link(Server, Port, Command, From, Timeout) ->
+    gen_fsm:start_link(?MODULE,
+                       [Server, Port, Command, From, Timeout], []).
+
+call(Server, Port, Command, From, Timeout) ->
+    supervisor:start_child(libchunter_fsm_sup,
+                           [Server, Port, Command, From, Timeout]).
 
 call(Server, Port, Command, From) ->
-    supervisor:start_child(libchunter_fsm_sup, [Server, Port, Command, From]).
+    supervisor:start_child(libchunter_fsm_sup,
+                           [Server, Port, Command, From, 4000]).
 
 cast(Server, Port, Command) ->
-    supervisor:start_child(libchunter_fsm_sup, [Server, Port, Command, undefined]).
+    supervisor:start_child(libchunter_fsm_sup,
+                           [Server, Port, Command, undefined, infinity]).
 
 %%%===================================================================
 %%% gen_fsm callbacks
 %%%===================================================================
 
-init([Server, Port, Command, From]) ->
+init([Server, Port, Command, From, Timeout]) ->
     {ok, connecting, #state{
-           server = Server,
-           command = Command,
-           port = Port,
-           from = From}, 0}.
+                        server = Server,
+                        command = Command,
+                        port = Port,
+                        from = From,
+                        timeout = Timeout}, 0}.
 
-connecting(_Event, #state{server=Sever,
+connecting(_Event, #state{server=Server,
                           port=Port,
                           from=From} = State) ->
-    case gen_tcp:connect(Sever, Port, [binary, {active,false}, {packet, 4}], 100) of
+    case gen_tcp:connect(Server, Port,
+                         [binary, {active, false}, {packet, 4}], 500) of
         {ok, Socket} ->
             {next_state, sending, State#state{socket = Socket}, 0};
         _ ->
-            gen_server:reply(From, {error, connection_failed}),
+            case From of
+                undefined ->
+                    ok;
+                From ->
+                    gen_server:reply(From, {error, connection_failed})
+            end,
             {next_state, closing, State, 0}
     end.
 
-sending(_Event, #state{socket=Socket,
-                       command = Command,
-                       from=From} = State) ->
+sending(_E, #state{socket=Socket,
+                   command = Command,
+                   from=From} = State) ->
     case gen_tcp:send(Socket, term_to_binary(Command)) of
         ok ->
             {next_state, rcving, State, 0};
@@ -95,12 +110,12 @@ sending(_Event, #state{socket=Socket,
     end.
 
 
-rcving(_Event, #state{socket=Socket, from=undefined} = State) ->
-    gen_tcp:recv(Socket, 0),
+rcving(_E, #state{socket=Socket, from=undefined, timeout=Timeout} = State) ->
+    gen_tcp:recv(Socket, 0, Timeout),
     {next_state, closing, State, 0};
 
-rcving(_Event, #state{socket=Socket, from=From} = State) ->
-    case gen_tcp:recv(Socket, 0) of
+rcving(_E, #state{socket=Socket, from=From, timeout=Timeout} = State) ->
+    case gen_tcp:recv(Socket, 0, Timeout) of
         {ok, Res} ->
             case binary_to_term(Res) of
                 {reply, R} ->
