@@ -11,6 +11,7 @@
 %% API
 -export([
          delete_machine/3,
+         store_machine/3,
          create_machine/6,
          lock/3,
          release/3,
@@ -434,6 +435,20 @@ start_machine(Server, Port, UUID) ->
                      UUID::fifo:vm_id()) -> ok.
 delete_machine(Server, Port, UUID) ->
     chunter_cast(Server, Port, {machines, delete, UUID}).
+
+%%--------------------------------------------------------------------
+%% @doc Removes a machine from the hypervisor that was stored in
+%% Leofs, same as delete just w/o the confirmation to sniffle and
+%% setting.
+%%
+%% This command is asyncronous.
+%% @end
+%%--------------------------------------------------------------------
+-spec store_machine(Server::inet:ip_address() | inet:hostname(),
+                     Port::inet:port_number(),
+                     UUID::fifo:vm_id()) -> ok.
+store_machine(Server, Port, UUID) ->
+    chunter_cast(Server, Port, {machines, store, UUID}).
 
 -spec lock(Server::inet:ip_address() | inet:hostname(),
            Port::inet:port_number(),
