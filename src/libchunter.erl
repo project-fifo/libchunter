@@ -491,7 +491,6 @@ create_machine(Server, Port, UUID, PSpec, DSpec, Config) ->
                      Package::fifo:package() | undefined,
                      Config::fifo:config()) -> ok.
 update_machine(Server, Port, UUID, Package, Config) ->
-    lager:debug("~p ~p ~p ~p ~p", [Server, Port, UUID, Package, Config]),
     chunter_cast(Server, Port, {machines, update, UUID, Package, Config}).
 
 %%--------------------------------------------------------------------
