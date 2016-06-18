@@ -33,6 +33,7 @@
          backup/11,
 
          update_fw/3,
+         set_metadata/3,
 
          service_enable/4,
          service_restart/4,
@@ -290,6 +291,18 @@ service_clear(Server, Port, Service) ->
                        ok.
 update_fw(Server, Port, VM) ->
     chunter_cast(Server, Port, {fw, update, VM}).
+
+%%--------------------------------------------------------------------
+%% @doc Notify that metadata has been set
+%% @end
+%%--------------------------------------------------------------------
+-spec set_metadata(Server::inet:ip_address() | inet:hostname(),
+                  Port::inet:port_number(),
+                  UUID::fifo:vm_id()) ->
+                          {error, timeout} |
+                          ok.
+set_metadata(Server, Port, VM) ->
+    chunter_cast(Server, Port, {metadata, set, VM}).
 
 %%--------------------------------------------------------------------
 %% @doc Creates a new snapshot with the given ID.
