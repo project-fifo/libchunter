@@ -1,11 +1,26 @@
+{"1.1.0",
 [{<<"fifo_dt">>,{pkg,<<"fifo_dt">>,<<"0.1.66">>},1},
  {<<"fifo_spec">>,{pkg,<<"fifo_spec">>,<<"0.1.27">>},0},
  {<<"fifo_utils">>,{pkg,<<"fifo_utils">>,<<"0.1.20">>},2},
- {<<"goldrush">>,{pkg,<<"goldrush">>,<<"0.1.7">>},1},
+ {<<"goldrush">>,{pkg,<<"goldrush">>,<<"0.1.8">>},1},
  {<<"jsx">>,{pkg,<<"jsx">>,<<"1.4.5">>},2},
  {<<"jsxd">>,{pkg,<<"jsxd">>,<<"0.1.10">>},2},
  {<<"lager">>,{pkg,<<"lager">>,<<"2.1.1">>},0},
  {<<"libsnarlmatch">>,{pkg,<<"libsnarlmatch">>,<<"0.1.7">>},2},
- {<<"quickrand">>,{pkg,<<"quickrand">>,<<"1.5.1">>},4},
+ {<<"quickrand">>,{pkg,<<"quickrand">>,<<"1.5.3">>},4},
  {<<"riak_dt">>,{pkg,<<"riak_dt">>,<<"2.1.1">>},2},
- {<<"uuid">>,{pkg,<<"uuid_erl">>,<<"1.5.1">>},3}].
+ {<<"uuid">>,{pkg,<<"uuid_erl">>,<<"1.5.1">>},3}]}.
+[
+{pkg_hash,[
+ {<<"fifo_dt">>, <<"8DCAFDBBD7F8B4081476C3554EAB518FE0A6132D523A9E87DC5B4ADB9CB89CCE">>},
+ {<<"fifo_spec">>, <<"4551D919B5289555129D3B5ADDD1C9323781D277B97F1C81EC7341F855D9D420">>},
+ {<<"fifo_utils">>, <<"4FF664CB7DB36516A5A295159546AE1BB1EBF92E14C4F473488166074B43591B">>},
+ {<<"goldrush">>, <<"2024BA375CEEA47E27EA70E14D2C483B2D8610101B4E852EF7F89163CDB6E649">>},
+ {<<"jsx">>, <<"4FADDBE604AC330256D99936973E0C828DBBA1D7F27EA246C71879E447051F10">>},
+ {<<"jsxd">>, <<"AA974FFCDFA6B0F8186EB99F77F10BB8202F33FFBF7AA0223349A1663EAED7C8">>},
+ {<<"lager">>, <<"8E389F916384ABF5F62169969BD7515C4C252CBBDA53FEEBBEF90F47DB5EAAD1">>},
+ {<<"libsnarlmatch">>, <<"CB58863E653406EAC5736E1F81EE8AA9BC75D906464D3BE63F22C5929500BA8C">>},
+ {<<"quickrand">>, <<"233F755B20F723A8E0A4EEBC568D90D28AB50880BBB13B5A864E05B3851CB42E">>},
+ {<<"riak_dt">>, <<"56B1898A543C561994F5D052FDEA972525CA98F46FDB3DCDB7366E4F92EE8F54">>},
+ {<<"uuid">>, <<"476F1EEA44DFECB8609D37E18C97D71042E1C8080F078504842349140A1FBE09">>}]}
+].
