@@ -475,8 +475,8 @@ release(Server, Port, UUID) ->
 -spec create_machine(Server::inet:ip_address() | inet:hostname(),
                      Port::inet:port_number(),
                      UUID::fifo:vm_id(),
-                     PSpec::fifo:package(),
-                     DSpec::fifo:dataset(),
+                     PSpec::ft_package:package(),
+                     DSpec::ft_dataset:dataset(),
                      Config::fifo:config()) -> ok | {error, lock}.
 create_machine(Server, Port, UUID, PSpec, DSpec, Config) ->
     chunter_call(Server, Port, {machines, create, UUID, PSpec, DSpec, Config}).
@@ -490,7 +490,7 @@ create_machine(Server, Port, UUID, PSpec, DSpec, Config) ->
 -spec update_machine(Server::inet:ip_address() | inet:hostname(),
                      Port::inet:port_number(),
                      UUID::fifo:vm_id(),
-                     Package::fifo:package() | undefined,
+                     Package::ft_package:package() | undefined,
                      Config::fifo:config()) -> ok.
 update_machine(Server, Port, UUID, Package, Config) ->
     chunter_cast(Server, Port, {machines, update, UUID, Package, Config}).
