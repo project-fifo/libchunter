@@ -77,7 +77,7 @@ ping(Server, Port) ->
                                           {error, timeout}.
 
 update(Server, Port) ->
-    chunter_cast(Server, Port, update).
+    chunter_call(Server, Port, update).
 
 %%%===================================================================
 %%% Console commands
@@ -157,7 +157,7 @@ console_send(Console, Data) ->
                             ok.
 
 service_enable(Server, Port, UUID, Service) ->
-    chunter_cast(Server, Port, {machines, service, enable, UUID, Service}).
+    chunter_call(Server, Port, {machines, service, enable, UUID, Service}).
 
 %%--------------------------------------------------------------------
 %% @doc Restart a service for a zone.
@@ -171,7 +171,7 @@ service_enable(Server, Port, UUID, Service) ->
                              ok.
 
 service_restart(Server, Port, UUID, Service) ->
-    chunter_cast(Server, Port, {machines, service, restart, UUID, Service}).
+    chunter_call(Server, Port, {machines, service, restart, UUID, Service}).
 
 %%--------------------------------------------------------------------
 %% @doc Refreshes a service for a zone.
@@ -185,7 +185,7 @@ service_restart(Server, Port, UUID, Service) ->
                             ok.
 
 service_refresh(Server, Port, UUID, Service) ->
-    chunter_cast(Server, Port, {machines, service, refresh, UUID, Service}).
+    chunter_call(Server, Port, {machines, service, refresh, UUID, Service}).
 
 %%--------------------------------------------------------------------
 %% @doc Disables a service for a zone.
@@ -199,7 +199,7 @@ service_refresh(Server, Port, UUID, Service) ->
                              ok.
 
 service_disable(Server, Port, UUID, Service) ->
-    chunter_cast(Server, Port, {machines, service, disable, UUID, Service}).
+    chunter_call(Server, Port, {machines, service, disable, UUID, Service}).
 
 %%--------------------------------------------------------------------
 %% @doc Clears a service that is in maintaiance or degraded state
@@ -213,7 +213,7 @@ service_disable(Server, Port, UUID, Service) ->
                            ok.
 
 service_clear(Server, Port, UUID, Service) ->
-    chunter_cast(Server, Port, {machines, service, clear, UUID, Service}).
+    chunter_call(Server, Port, {machines, service, clear, UUID, Service}).
 
 %%--------------------------------------------------------------------
 %% @doc Enable a service for a zone.
@@ -226,7 +226,7 @@ service_clear(Server, Port, UUID, Service) ->
                             ok.
 
 service_enable(Server, Port, Service) ->
-    chunter_cast(Server, Port, {service, enable, Service}).
+    chunter_call(Server, Port, {service, enable, Service}).
 
 %%--------------------------------------------------------------------
 %% @doc Refresh a service for a zone.
@@ -239,7 +239,7 @@ service_enable(Server, Port, Service) ->
                              ok.
 
 service_refresh(Server, Port, Service) ->
-    chunter_cast(Server, Port, {service, refresh, Service}).
+    chunter_call(Server, Port, {service, refresh, Service}).
 
 %%--------------------------------------------------------------------
 %% @doc Restarts a service for a zone.
@@ -252,7 +252,7 @@ service_refresh(Server, Port, Service) ->
                              ok.
 
 service_restart(Server, Port, Service) ->
-    chunter_cast(Server, Port, {service, restart, Service}).
+    chunter_call(Server, Port, {service, restart, Service}).
 
 %%--------------------------------------------------------------------
 %% @doc Disables a service for a zone.
@@ -265,7 +265,7 @@ service_restart(Server, Port, Service) ->
                              ok.
 
 service_disable(Server, Port, Service) ->
-    chunter_cast(Server, Port, {service, disable, Service}).
+    chunter_call(Server, Port, {service, disable, Service}).
 
 %%--------------------------------------------------------------------
 %% @doc Clears a service that is in maintaiance or degraded state
@@ -278,7 +278,7 @@ service_disable(Server, Port, Service) ->
                            ok.
 
 service_clear(Server, Port, Service) ->
-    chunter_cast(Server, Port, {service, clear, Service}).
+    chunter_call(Server, Port, {service, clear, Service}).
 
 %%--------------------------------------------------------------------
 %% @doc Triggers a firewall update
@@ -290,7 +290,7 @@ service_clear(Server, Port, Service) ->
                        {error, timeout} |
                        ok.
 update_fw(Server, Port, VM) ->
-    chunter_cast(Server, Port, {fw, update, VM}).
+    chunter_call(Server, Port, {fw, update, VM}).
 
 %%--------------------------------------------------------------------
 %% @doc Creates a new snapshot with the given ID.
@@ -303,7 +303,7 @@ update_fw(Server, Port, VM) ->
                       {error, timeout} |
                       ok.
 snapshot(Server, Port, UUID, SnapID) ->
-    chunter_cast(Server, Port, {machines, snapshot, UUID, SnapID}).
+    chunter_call(Server, Port, {machines, snapshot, UUID, SnapID}).
 
 %%--------------------------------------------------------------------
 %% @doc Deletes the snapshot of the given ID.
@@ -316,7 +316,7 @@ snapshot(Server, Port, UUID, SnapID) ->
                              {error, timeout} |
                              ok.
 delete_snapshot(Server, Port, UUID, SnapID) ->
-    chunter_cast(Server, Port, {machines, snapshot, delete, UUID, SnapID}).
+    chunter_call(Server, Port, {machines, snapshot, delete, UUID, SnapID}).
 
 %%--------------------------------------------------------------------
 %% @doc Rolls back the snapshot with the given ID, beware that all
@@ -384,7 +384,7 @@ backup(Server, Port, UUID, SnapId, S3Server, S3Port, Bucket, AKey,
     backup(Server, Port, UUID, SnapId, Opts1).
 
 backup(Server, Port, UUID, SnapId, Opts) ->
-    chunter_cast(Server, Port, {machines, backup, UUID, SnapId, Opts}).
+    chunter_call(Server, Port, {machines, backup, UUID, SnapId, Opts}).
 
 s3opts(S3Server, S3Port, Bucket, AKey, SKey, Bucket, Opts) ->
     [{access_key, AKey}, {secret_key, SKey},
@@ -406,10 +406,10 @@ restore_backup(Server, Port, UUID, SnapId, S3Server, S3Port, Bucket, AKey,
     restore_backup(Server, Port, UUID, SnapId, Opts1).
 
 restore_backup(Server, Port, UUID, SnapId, Opts) ->
-    chunter_cast(Server, Port, {machines, backup, restore, UUID, SnapId, Opts}).
+    chunter_call(Server, Port, {machines, backup, restore, UUID, SnapId, Opts}).
 
 delete_backup(Server, Port, UUID, SnapID) ->
-    chunter_cast(Server, Port, {machines, backup, delete, UUID, SnapID}).
+    chunter_call(Server, Port, {machines, backup, delete, UUID, SnapID}).
 
 %%--------------------------------------------------------------------
 %% @doc Starts a machine.
@@ -422,7 +422,7 @@ delete_backup(Server, Port, UUID, SnapID) ->
                     UUID::fifo:vm_id()) -> ok.
 
 start_machine(Server, Port, UUID) ->
-    chunter_cast(Server, Port, {machines, start, UUID}).
+    chunter_call(Server, Port, {machines, start, UUID}).
 
 %%--------------------------------------------------------------------
 %% @doc Deletes a machine.
@@ -434,7 +434,7 @@ start_machine(Server, Port, UUID) ->
                      Port::inet:port_number(),
                      UUID::fifo:vm_id()) -> ok.
 delete_machine(Server, Port, UUID) ->
-    chunter_cast(Server, Port, {machines, delete, UUID}).
+    chunter_call(Server, Port, {machines, delete, UUID}).
 
 %%--------------------------------------------------------------------
 %% @doc Removes a machine from the hypervisor that was stored in
@@ -448,7 +448,7 @@ delete_machine(Server, Port, UUID) ->
                      Port::inet:port_number(),
                      UUID::fifo:vm_id()) -> ok.
 store_machine(Server, Port, UUID) ->
-    chunter_cast(Server, Port, {machines, store, UUID}).
+    chunter_call(Server, Port, {machines, store, UUID}).
 
 -spec lock(Server::inet:ip_address() | inet:hostname(),
            Port::inet:port_number(),
@@ -493,7 +493,7 @@ create_machine(Server, Port, UUID, PSpec, DSpec, Config) ->
                      Package::ft_package:package() | undefined,
                      Config::fifo:config()) -> ok.
 update_machine(Server, Port, UUID, Package, Config) ->
-    chunter_cast(Server, Port, {machines, update, UUID, Package, Config}).
+    chunter_call(Server, Port, {machines, update, UUID, Package, Config}).
 
 %%--------------------------------------------------------------------
 %% @doc Starts a KVM virtual machine from a iso image.
@@ -505,7 +505,7 @@ update_machine(Server, Port, UUID, Package, Config) ->
                     UUID::fifo:vm_id(),
                     Imge::binary()) -> ok.
 start_machine(Server, Port, UUID, Image) ->
-    chunter_cast(Server, Port, {machines, start, UUID, Image}).
+    chunter_call(Server, Port, {machines, start, UUID, Image}).
 
 %%--------------------------------------------------------------------
 %% @doc Stops a virtual machine.
@@ -530,10 +530,10 @@ stop_machine(Server, Port, UUID) ->
                    Options::[atom()|{atom(), term()}]) -> ok.
 
 stop_machine(Server, Port, UUID, [force]) ->
-    chunter_cast(Server, Port, {machines, stop, force, UUID});
+    chunter_call(Server, Port, {machines, stop, force, UUID});
 
 stop_machine(Server, Port, UUID, []) ->
-    chunter_cast(Server, Port, {machines, stop, UUID}).
+    chunter_call(Server, Port, {machines, stop, UUID}).
 
 %%--------------------------------------------------------------------
 %% @doc Reboots a virtual machine.
@@ -560,22 +560,15 @@ reboot_machine(Server, Port, UUID) ->
                      Options::[atom()|{atom(), term()}]) -> ok.
 
 reboot_machine(Server, Port, UUID, [force]) ->
-    chunter_cast(Server, Port, {machines, reboot, force, UUID});
+    chunter_call(Server, Port, {machines, reboot, force, UUID});
 
 reboot_machine(Server, Port, UUID, []) ->
-    chunter_cast(Server, Port, {machines, reboot, UUID}).
+    chunter_call(Server, Port, {machines, reboot, UUID}).
 
 
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-
--spec chunter_cast(Server::inet:ip_address() | inet:hostname(),
-                   Port::inet:port_number(),
-                   Cast::fifo:chunter_message()) -> ok.
-
-chunter_cast(Server, Port, Cast) ->
-    libchunter_server:cast(Server, Port, Cast).
 
 -spec chunter_call(Server::inet:ip_address() | inet:hostname(),
                    Port::inet:port_number(),
