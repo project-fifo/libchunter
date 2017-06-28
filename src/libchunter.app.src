@@ -1,6 +1,6 @@
 {application,libchunter,
              [{description,"Chunter interface library."},
-              {vsn,"0.1.49"},
+              {vsn, git},
               {registered,[]},
               {applications,[kernel,stdlib,lager]},
               {mod,{libchunter_app,[]}},
