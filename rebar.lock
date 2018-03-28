@@ -1,11 +1,26 @@
-[{<<"fifo_dt">>,{pkg,<<"fifo_dt">>,<<"0.2.11">>},1},
- {<<"fifo_spec">>,{pkg,<<"fifo_spec">>,<<"0.1.32">>},0},
- {<<"fifo_utils">>,{pkg,<<"fifo_utils">>,<<"0.1.38">>},2},
+{"1.1.0",
+[{<<"fifo_dt">>,{pkg,<<"fifo_dt">>,<<"0.2.26">>},1},
+ {<<"fifo_spec">>,{pkg,<<"fifo_spec">>,<<"0.1.34">>},0},
+ {<<"fifo_utils">>,{pkg,<<"fifo_utils">>,<<"0.1.52">>},2},
  {<<"goldrush">>,{pkg,<<"goldrush">>,<<"0.1.9">>},1},
- {<<"jsone">>,{pkg,<<"jsone">>,<<"1.4.4">>},3},
+ {<<"jsone">>,{pkg,<<"jsone">>,<<"1.4.5">>},3},
  {<<"jsxd">>,{pkg,<<"jsxd">>,<<"0.2.4">>},2},
- {<<"lager">>,{pkg,<<"lager">>,<<"3.5.1">>},0},
+ {<<"lager">>,{pkg,<<"lager">>,<<"3.5.2">>},0},
  {<<"libsnarlmatch">>,{pkg,<<"libsnarlmatch">>,<<"0.1.8">>},2},
- {<<"quickrand">>,{pkg,<<"quickrand">>,<<"1.5.4">>},4},
+ {<<"quickrand">>,{pkg,<<"quickrand">>,<<"1.7.3">>},3},
  {<<"riak_dt">>,{pkg,<<"riak_dt">>,<<"2.1.1">>},2},
- {<<"uuid">>,{pkg,<<"uuid_erl">>,<<"1.5.4">>},3}].
+ {<<"uuid">>,{pkg,<<"uuid_erl">>,<<"1.7.3">>},3}]}.
+[
+{pkg_hash,[
+ {<<"fifo_dt">>, <<"993F19BB1A03199187D1958E6FE90F8BB9476378ECA93FBAC8CF89F10D48585C">>},
+ {<<"fifo_spec">>, <<"0708AF6868CE06059F7C35FC6E7F2A7787BE8B87C782080B76610B13715F68EB">>},
+ {<<"fifo_utils">>, <<"0B65F989E134293AF3E4D874FC4D5F740AE5160DE5C7D26451F40F518A3D564A">>},
+ {<<"goldrush">>, <<"F06E5D5F1277DA5C413E84D5A2924174182FB108DABB39D5EC548B27424CD106">>},
+ {<<"jsone">>, <<"547AEFEC1C67FE3283F77BAC4DAF85F3F593002764F768FAAA423875A51A2320">>},
+ {<<"jsxd">>, <<"C14114AFCA463F2D03D3FB6CC81FD51CDA8CA86A47E5AC3ABDF0CA572A73A413">>},
+ {<<"lager">>, <<"614A8C8F67BF99B69EB264EA22121AD25511C055AAEC09B086773D5108C6767F">>},
+ {<<"libsnarlmatch">>, <<"198C9628A89CADD38A58F45CF152A6432121F7716ED417BB5980A37455E55C23">>},
+ {<<"quickrand">>, <<"0E4FB48FAC904FE0C6E21D7E8C31A288A0700E1E81A35B38B649FC119079755D">>},
+ {<<"riak_dt">>, <<"56B1898A543C561994F5D052FDEA972525CA98F46FDB3DCDB7366E4F92EE8F54">>},
+ {<<"uuid">>, <<"C5DF97D1A3D626235C2415E74053C47B2138BB863C5CD802AB5CAECB8ECC019F">>}]}
+].
