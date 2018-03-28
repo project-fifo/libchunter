@@ -120,7 +120,15 @@ handle_cast(_Msg, State) ->
 %%--------------------------------------------------------------------
 
 handle_info({tcp, _Socket, Data}, State = #state{proc = Proc}) ->
-    Proc ! {data, Data},
+    Msg = case binary_to_form(Data) of
+              {data, Data} ->
+                  {data, Data};
+              opened ->
+                  opened;
+              closed ->
+                  closed
+          end,
+    Proc ! Msg,
     {noreply, State};
 
 handle_info({tcp_closed, _Socket}, State = #state{proc = Proc}) ->
